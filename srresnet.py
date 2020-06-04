@@ -16,6 +16,16 @@ class Srresnet:
             exit()
         self.content_loss = content_loss
 
+
+    def _Prelu(self, _x):
+        alphas = tf.get_variable('alpha', _x.get_shape()[-1],\
+            initializer=tf.constant_initializer(0.0),
+            dtype=tf.float32)
+        pos = tf.nn.relu(_x)
+        neg = alphas * (_x - abs(_x)) * 0.5
+
+        return pos + neg
+
     def ResidualBlock(self, x, kernel_size, filter_size):
         """Residual block a la ResNet"""
         # with tf.variable_scope('sr_edge_net') as scope:		
@@ -31,9 +41,9 @@ class Srresnet:
         skip = x
         x = tf.nn.conv2d(x, weights['w1'], strides=[1,1,1,1], padding='SAME')
         x = tf.layers.batch_normalization(x, training=self.training)
-        x = tf.nn.relu(x)
+        x = self._Prelu(x)
         x = tf.nn.conv2d(x, weights['w2'], strides=[1,1,1,1], padding='SAME')
-        x = tf.nn.relu(x)
+        x = self._Prelu(x)
         x = tf.layers.batch_normalization(x, training=self.training)
 
         x = x + skip
@@ -52,7 +62,7 @@ class Srresnet:
         x = tf.depth_to_space(x, 2)
         print('after',x)
 
-        x = tf.nn.relu(x)
+        x = self._Prelu(x)
         return x
 
 
@@ -70,7 +80,7 @@ class Srresnet:
 
             # print(x_concate)
             x = tf.nn.conv2d(x, weights['w_in'], strides=[1,1,1,1], padding='SAME')
-            x = tf.nn.relu(x, name='layer_input')
+            x = self._Prelu(x)
             skip = x
 
             for i in range(self.num_blocks):
