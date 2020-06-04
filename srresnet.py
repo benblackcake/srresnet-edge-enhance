@@ -31,11 +31,11 @@ class Srresnet:
         # with tf.variable_scope('sr_edge_net') as scope:		
         weights = {
             'w1':tf.get_variable(name='w1_redidual',\
-            shape=[kernel_size, kernel_size, filter_size, filter_size], dtype=tf.float32,\
-            initializer=tf.glorot_normal_initializer()),
+                shape=[kernel_size, kernel_size, filter_size, filter_size], dtype=tf.float32,\
+                initializer=tf.glorot_normal_initializer()),
             'w2':tf.get_variable(name='w2_residual',\
-            shape=[kernel_size, kernel_size, filter_size, filter_size], dtype=tf.float32,\
-            initializer=tf.glorot_normal_initializer()),
+                shape=[kernel_size, kernel_size, filter_size, filter_size], dtype=tf.float32,\
+                initializer=tf.glorot_normal_initializer()),
         }
 
         skip = x
