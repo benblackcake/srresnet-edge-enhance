@@ -1,0 +1,7 @@
+/results/*
+/Benchmarks
+*.ckpt
+/__pycache__/*
+/ILSVRC2012_img_train/*
+/.idea/*
+/done_dataset/*
