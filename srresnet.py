@@ -32,10 +32,10 @@ class Srresnet:
         weights = {
             'w1':tf.get_variable(name='w1_redidual',\
                 shape=[kernel_size, kernel_size, filter_size, filter_size], dtype=tf.float32,\
-                initializer=tf.glorot_normal_initializer()),
+                initializer=tf.contrib.layers.xavier_initializer()),
             'w2':tf.get_variable(name='w2_residual',\
                 shape=[kernel_size, kernel_size, filter_size, filter_size], dtype=tf.float32,\
-                initializer=tf.glorot_normal_initializer()),
+                initializer=tf.contrib.layers.xavier_initializer()),
         }
 
         skip = x
@@ -53,7 +53,7 @@ class Srresnet:
         weights = {
         'w1':tf.get_variable(name='w1_upsample',\
             shape=[kernel_size, kernel_size, 64, filter_size], dtype=tf.float32,\
-            initializer=tf.glorot_normal_initializer()),
+            initializer=tf.contrib.layers.xavier_initializer()),
         }
         """Upsample 2x via SubpixelConv"""
         print('init',x)
@@ -71,11 +71,11 @@ class Srresnet:
 
             weights = {
                 'w_in':tf.get_variable(name='w_in', shape=[9, 9, 3, 64], dtype=tf.float32,\
-                    initializer=tf.glorot_normal_initializer()),
+                    initializer=tf.contrib.layers.xavier_initializer()),
                 'w1':tf.get_variable(name='w1', shape=[3, 3, 64, 64], dtype=tf.float32,\
-                    initializer=tf.glorot_normal_initializer()),
+                    initializer=tf.contrib.layers.xavier_initializer()),
                 'w_out':tf.get_variable(name='w_out', shape=[9, 9, 64, 3], dtype=tf.float32,\
-                    initializer=tf.glorot_normal_initializer()),
+                    initializer=tf.contrib.layers.xavier_initializer()),
             }
 
             # print(x_concate)
