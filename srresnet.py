@@ -11,7 +11,7 @@ class Srresnet:
         self.num_upsamples = num_upsamples
         self.training = training
 
-        if content_loss not in ['mse', 'L1']:
+        if content_loss not in ['mse', 'L1','edge_loss_mse','edge_loss_L1']:
             print('Invalid content loss function. Must be \'mse\', or \'L1_loss\'.')
             exit()
         self.content_loss = content_loss
@@ -102,9 +102,19 @@ class Srresnet:
         """MSE, VGG22, or VGG54"""
         if self.content_loss == 'mse':
             return tf.reduce_mean(tf.square(y - y_pred))
+
         if self.content_loss == 'L1':
             return tf.reduce_mean(tf.abs(y - y_pred))
 
+        if self.content_loss == 'edge_loss_mse':
+            y_sobeled = tf.image.sobel_edges(y)
+            y_pred_sobeled = tf.sobel_edges(y_pred)
+            return tf.reduce_mean(tf.square(y - y_pred)) + tf.reduce_mean(tf.square(y_sobeled - y_pred_sobeled))
+
+        if self.content_loss == 'edge_loss_L1':
+            y_sobeled = tf.image.sobel_edges(y)
+            y_pred_sobeled = tf.sobel_edges(y_pred)
+            return tf.reduce_mean(tf.abs(y - y_pred)) + tf.reduce_mean(tf.square(y_sobeled - y_pred_sobeled))
 
     def loss_function(self, y, y_pred):
 
