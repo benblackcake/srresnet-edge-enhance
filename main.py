@@ -19,7 +19,7 @@ def main():
     parser.add_argument('--log-freq', type=int, default=10000,
                         help='How many training iterations between validation/checkpoints.')
     parser.add_argument('--learning-rate', type=float, default=1e-4, help='Learning rate for Adam.')
-    parser.add_argument('--content-loss', type=str, default='mse', choices=['mse', 'vgg22', 'vgg54'],
+    parser.add_argument('--content-loss', type=str, default='mse', choices=['mse', 'L1','edge_loss_mse','edge_loss_L1'],
                         help='Metric to use for content loss.')
     parser.add_argument('--use-gan', action='store_true',
                         help='Add adversarial loss term to generator and trains discriminator.')
