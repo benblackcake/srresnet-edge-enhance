@@ -113,7 +113,7 @@ class Srresnet:
 
         if self.content_loss == 'edge_loss_L1':
             y_sobeled = tf.image.sobel_edges(y)
-            y_pred_sobeled = tf.sobel_edges(y_pred)
+            y_pred_sobeled = tf.image.sobel_edges(y_pred)
             return tf.reduce_mean(tf.abs(y - y_pred)) + tf.reduce_mean(tf.square(y_sobeled - y_pred_sobeled))
 
     def loss_function(self, y, y_pred):
