@@ -16,7 +16,7 @@ import cv2
 
 def downsample(image, factor):
     """Downsampling function which matches photoshop"""
-    return scipy.misc.imresize(image, 1.0 / factor, interp='bicubic')
+    return cv2.resize(image,None,fx = 1.0/factor ,fy = 1.0/factor, interpolation = cv2.INTER_CUBIC)
 
 
 def downsample_batch(batch, factor):

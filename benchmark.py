@@ -7,7 +7,7 @@ from skimage.color import rgb2ycbcr, rgb2yuv
 
 from skimage.measure import compare_psnr
 from utils import preprocess, downsample
-
+import cv2
 
 class Benchmark:
     """A collection of images to test a model on."""
@@ -33,7 +33,7 @@ class Benchmark:
         """Given a list of file names, return a list of images"""
         out = []
         for image in images:
-            out.append(misc.imread(image, mode='RGB').astype(np.uint8))
+            out.append(cv2.imread(image).astype(np.uint8))
         return out
 
     def deprocess(self, image):
@@ -43,7 +43,7 @@ class Benchmark:
 
     def luminance(self, image):
         # Get luminance
-        lum = rgb2ycbcr(image)[:, :, 0]
+        lum = cv2.cvtColor(image,cv2.COLOR_BGR2YCR_CB)[:, :, 0]
         # Crop off 4 border pixels
         lum = lum[4:lum.shape[0] - 4, 4:lum.shape[1] - 4]
         # lum = lum.astype(np.float64)
