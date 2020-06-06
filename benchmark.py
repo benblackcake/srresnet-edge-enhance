@@ -33,12 +33,12 @@ class Benchmark:
         """Given a list of file names, return a list of images"""
         out = []
         for image in images:
-            out.append(cv2.imread(image).astype(np.uint8))
+            out.append(cv2.imread(image))
         return out
 
     def deprocess(self, image):
         """Deprocess image output by model (from -1 to 1 float to 0 to 255 uint8)"""
-        image = np.clip(255 * 0.5 * (image + 1.0), 0.0, 255.0).astype(np.uint8)
+        image = np.clip(255 * 0.5 * (image + 1.0), 0.0, 255.0)
         return image
 
     def luminance(self, image):
