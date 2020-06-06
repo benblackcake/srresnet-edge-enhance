@@ -96,7 +96,7 @@ class Benchmark:
         if not os.path.exists(os.path.split(path)[0]):
             os.makedirs(os.path.split(path)[0])
         # misc.toimage(image, cmin=0, cmax=255).save(path)
-        cv2.imwrite(path, image * 255.)
+        cv2.imwrite(path, np.clip(image,0,255))
 
 
     def save_images(self, images, log_path, iteration):
