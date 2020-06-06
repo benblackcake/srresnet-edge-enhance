@@ -43,7 +43,7 @@ class Benchmark:
 
     def luminance(self, image):
         # Get luminance
-        lum = cv2.cvtColor(image,cv2.COLOR_BGR2YCR_CB)[:, :, 0]
+        lum = cv2.cvtColor(image,cv2.COLOR_BGR2YCrCb)[:, :, 0]
         # Crop off 4 border pixels
         lum = lum[4:lum.shape[0] - 4, 4:lum.shape[1] - 4]
         # lum = lum.astype(np.float64)
