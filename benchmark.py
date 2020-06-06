@@ -38,8 +38,7 @@ class Benchmark:
 
     def deprocess(self, image):
         """Deprocess image output by model (from -1 to 1 float to 0 to 255 uint8)"""
-        # image = np.clip(255 * 0.5 * (image + 1.0), 0.0, 255.0).astype(np.uint8)
-        return np.clip(image*255.,0,255).astype(np.uint8)
+        image = np.clip(255 * 0.5 * (image + 1.0), 0.0, 255.0).astype(np.uint8)
 
     def luminance(self, image):
         # Get luminance
@@ -142,7 +141,7 @@ class Benchmark:
     def eval(self, sess, g_y_pred, log_path=None, iteration=0):
         pred = []
         
-        for i, lr in enumerate(self.images_hr):
+        for i, lr in enumerate(self.images_lr):
             lr = lr/255.0
             output = sess.run(g_y_pred, feed_dict={'srresnet_training:0': False,\
                                                    'LR_image:0': lr[np.newaxis]})
