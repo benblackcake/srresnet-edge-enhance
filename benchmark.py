@@ -132,7 +132,7 @@ class Benchmark:
             lr[np.newaxis].shape=(1,128,128,3)
             '''
             # deprocess output
-            pred.append(self.deprocess((output, axis=0))
+            pred.append(self.deprocess((output)))
         # save images
         if log_path:
             self.save_images(pred, log_path, iteration)
