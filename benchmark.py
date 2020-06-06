@@ -45,7 +45,7 @@ class Benchmark:
         # Get luminance
         lum = cv2.cvtColor(image,cv2.COLOR_BGR2YCR_CB)[:, :, 0]
         # Crop off 4 border pixels
-        # lum = lum[4:lum.shape[0] - 4, 4:lum.shape[1] - 4]
+        lum = lum[4:lum.shape[0] - 4, 4:lum.shape[1] - 4]
         # lum = lum.astype(np.float64)
         return lum
 
