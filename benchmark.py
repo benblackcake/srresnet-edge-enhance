@@ -6,7 +6,7 @@ from skimage.measure import compare_ssim
 from skimage.color import rgb2ycbcr, rgb2yuv
 
 from skimage.measure import compare_psnr
-from utils import preprocess, downsample
+from utils import preprocess, downsample,calculate_psnr, calculate_ssim
 import cv2
 
 class Benchmark:
@@ -55,10 +55,10 @@ class Benchmark:
         # mse = np.mean((pred - gt)**2)
         # psnr = 10*np.log10(255*255/mse)
         # return psnr
-        return compare_psnr(gt, pred, data_range=255)
+        return calculate_psnr(gt, pred)
 
     def SSIM(self, gt, pred):
-        ssim = compare_ssim(gt, pred, data_range=255, gaussian_weights=True)
+        ssim = calculate_ssim(gt, pred)
         return ssim
 
     def test_images(self, gt, pred):
