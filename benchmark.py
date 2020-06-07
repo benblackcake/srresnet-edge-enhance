@@ -122,6 +122,7 @@ class Benchmark:
         pred = []
         for i, lr in enumerate(self.images_lr):
             # feed images 1 by 1 because they have different sizes
+            lr = np.asarray(lr)
             lr = lr / 255.0
             # print(lr.shape)
             # print(lr[np.newaxis].shape)

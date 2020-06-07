@@ -137,7 +137,7 @@ def main():
                         saver.save(sess, os.path.join(log_path, 'weights'), global_step=iteration, write_meta_graph=False)
                     
                     # Train Srresnet   
-                    batch_hr = train_data_set[batch_idx:batch_idx + 16]
+                    batch_hr = np.asarray(train_data_set[batch_idx:batch_idx + 16])
                     batch_lr = downsample_batch(batch_hr, factor=4)
                     batch_lr, batch_hr = preprocess(batch_lr, batch_hr)
                     _, err = sess.run([sr_opt,sr_loss],\
