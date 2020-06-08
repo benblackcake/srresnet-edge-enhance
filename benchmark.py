@@ -39,7 +39,7 @@ class Benchmark:
 
     def deprocess(self, image):
         """Deprocess image output by model (from -1 to 1 float to 0 to 255 uint8)"""
-        image = np.clip(255 * 0.5 * (image + 1.0), 0.0, 255.0).astype(np.uint16)
+        image = np.clip(255 * 0.5 * (image + 1.0), 0.0, 255.0).astype(np.uint8)
         return image
 
     def luminance(self, image):
