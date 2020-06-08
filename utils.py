@@ -18,7 +18,8 @@ from PIL import Image
 def downsample(image, factor):
     """Downsampling function which matches photoshop"""
     # return scipy.misc.imresize(image, 1.0 / factor, interp='bicubic')
-    return image.resize((image.shape[0]//factor,image.shape[1]//factor),Image.BICUBIC)
+    width, height = image.size
+    return image.resize((width//factor,height//factor),Image.BICUBIC)
 
 def downsample_batch(batch, factor):
     downsampled = np.zeros((batch.shape[0], batch.shape[1] // factor, batch.shape[2] // factor, 3))
