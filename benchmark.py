@@ -123,13 +123,13 @@ class Benchmark:
             lr_edge = sobel_oper(lr)
             lr_edge = np.expand_dims(lr_edge,axis=-1)
             lr_edge = lr_edge / 255.0
-            
+
             lr = lr / 255.0
             # print(lr.shape)
             # print(lr[np.newaxis].shape)
             output = sess.run(y_pred, feed_dict={'srresnet_training:0': False,\
                                                 'LR_image:0': lr[np.newaxis],\
-                                                'LR_edge': lr_edge[np.newaxis]
+                                                'LR_edge:0': lr_edge[np.newaxis]
                                                 })
             '''
             e.g. lr.shape=(128,128,3)
