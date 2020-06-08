@@ -104,10 +104,17 @@ def evaluate_model(loss_function, get_batch, sess, num_images, batch_size):
     for i in range(int(math.ceil(num_images / batch_size))):
         batch_hr = get_batch
         batch_lr = downsample_batch(batch_hr, factor=4)
+
+        batch_lr_edge = sobel_oper_batch(batch_lr)
+        batch_lr_edge = np.expand_dims(batch_lr_edge,axis=-1)/255. #normalize
+        
         batch_lr, batch_hr = preprocess(batch_lr, batch_hr)
         loss += sess.run(loss_function,
-                         feed_dict={'srresnet_training:0': False,'LR_image:0': batch_lr,
-                                    'HR_image:0': batch_hr})
+                         feed_dict={'srresnet_training:0': False,\
+                                    'LR_image:0': batch_lr,\
+                                    'HR_image:0': batch_hr,\
+                                    'LR_edge:0' :batch_lr_edge
+                                    })
         total += 1
     loss = loss / total
     return loss

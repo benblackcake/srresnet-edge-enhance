@@ -44,7 +44,7 @@ def main():
                               content_loss=args.content_loss)
 
     hr_y = tf.placeholder(tf.float32, [None, None, None, 3], name='HR_image')
-    lr_edge = tf.placeholder(tf.float32, [None, None, None, 1], name='HR_image')
+    lr_edge = tf.placeholder(tf.float32, [None, None, None, 1], name='LR_edge')
     lr_x = tf.placeholder(tf.float32, [None, None, None, 3], name='LR_image')
 
     sr_pred = srresnet_model.forward(lr_x, lr_edge)

@@ -6,7 +6,7 @@ from skimage.measure import compare_ssim
 from skimage.color import rgb2ycbcr, rgb2yuv
 
 from skimage.measure import compare_psnr
-from utils import preprocess, downsample
+from utils import preprocess, downsample, sobel_oper
 
 
 class Benchmark:
@@ -120,11 +120,17 @@ class Benchmark:
         pred = []
         for i, lr in enumerate(self.images_lr):
             # feed images 1 by 1 because they have different sizes
+            lr_edge = sobel_oper(lr)
+            lr_edge = np.expand_dims(lr_edge,axis=-1)
+            lr_edge = lr_edge / 255.0
+            
             lr = lr / 255.0
             # print(lr.shape)
             # print(lr[np.newaxis].shape)
             output = sess.run(y_pred, feed_dict={'srresnet_training:0': False,\
-                                                'LR_image:0': lr[np.newaxis]})
+                                                'LR_image:0': lr[np.newaxis],\
+                                                'LR_edge': lr_edge[np.newaxis]
+                                                })
             '''
             e.g. lr.shape=(128,128,3)
             lr[np.newaxis].shape=(1,128,128,3)
@@ -141,6 +147,8 @@ class Benchmark:
         pred = []
         
         for i, lr in enumerate(self.images_hr):
+            
+            lr = sobel_oper(lr)
             lr = lr/255.0
             output = sess.run(g_y_pred, feed_dict={'srresnet_training:0': False,\
                                                    'LR_image:0': lr[np.newaxis]})
