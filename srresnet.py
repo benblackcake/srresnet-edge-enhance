@@ -66,11 +66,12 @@ class Srresnet:
         return x
 
 
-    def forward(self, x):
+    def forward(self, x, x_edge):
         with tf.variable_scope('srresnet_edge',reuse=tf.AUTO_REUSE) as scope:
+            x = tf.concat([x, x_edge],axis=3, name='x_input_concate')
 
             weights = {
-                'w_in':tf.get_variable(name='w_in', shape=[9, 9, 3, 64], dtype=tf.float32,\
+                'w_in':tf.get_variable(name='w_in', shape=[9, 9, 4, 64], dtype=tf.float32,\
                     initializer=tf.glorot_normal_initializer()),
                 'w1':tf.get_variable(name='w1', shape=[3, 3, 64, 64], dtype=tf.float32,\
                     initializer=tf.glorot_normal_initializer()),

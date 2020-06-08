@@ -44,9 +44,10 @@ def main():
                               content_loss=args.content_loss)
 
     hr_y = tf.placeholder(tf.float32, [None, None, None, 3], name='HR_image')
+    lr_edge = tf.placeholder(tf.float32, [None, None, None, 1], name='HR_image')
     lr_x = tf.placeholder(tf.float32, [None, None, None, 3], name='LR_image')
 
-    sr_pred = srresnet_model.forward(lr_x)
+    sr_pred = srresnet_model.forward(lr_x, lr_edge)
     sr_loss = srresnet_model.loss_function(hr_y,sr_pred)
     sr_opt = srresnet_model.optimize(sr_loss)
 
@@ -138,10 +139,19 @@ def main():
                     
                     # Train Srresnet   
                     batch_hr = train_data_set[batch_idx:batch_idx + 16]
+
                     batch_lr = downsample_batch(batch_hr, factor=4)
+                    batch_lr_edge = sobel_oper_batch(batch_lr)
+                    batch_lr_edge = np.expand_dims(batch_lr_edge,axis=-1)/255. #normalize
+
                     batch_lr, batch_hr = preprocess(batch_lr, batch_hr)
+
                     _, err = sess.run([sr_opt,sr_loss],\
-                         feed_dict={srresnet_training: True, lr_x: batch_lr, hr_y: batch_hr})
+                         feed_dict={srresnet_training: True,\
+                                    lr_x: batch_lr,\
+                                    hr_y: batch_hr,\
+                                    lr_edge: batch_lr_edge
+                                    })
 
                     #print('__training__ %s' % iteration)
                     iteration += 1

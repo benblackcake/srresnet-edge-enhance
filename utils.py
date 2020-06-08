@@ -14,6 +14,47 @@ import glob
 import h5py
 import cv2
 
+
+def cany_oper(image):
+    """Using cany operator to get image edge map"""
+    kernel_size = 3
+    low_threshold = 1
+    high_threshold = 10
+
+    gray_img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    blur_gray = cv2.GaussianBlur(gray_img,(kernel_size, kernel_size), 0)
+
+    edges = cv2.Canny(blur_gray, low_threshold, high_threshold)
+
+    return edges
+
+def sobel_oper(image):
+
+    x = cv2.Sobel(image,cv2.CV_16S,1,0)
+    y = cv2.Sobel(image,cv2.CV_16S,0,1)
+     
+    absX = cv2.convertScaleAbs(x)
+    absY = cv2.convertScaleAbs(y)
+     
+    dst = cv2.addWeighted(absX,0.5,absY,0.5,0)
+    return dst 
+
+def sobel_oper_batch(batch):
+    # print(batch.shape) 
+    # if batch.shape[1]%2 !=t 0 || batch.shape[2]%2 != 0:
+    sobeled = np.zeros((batch.shape[0], batch.shape[1] , batch.shape[2]))
+    for i in range(batch.shape[0]):
+        sobeled[i, :, :] = sobel_oper(batch[i, :, :, :])
+    return sobeled
+
+def cany_oper_batch(batch):
+    # print(batch.shape) 
+    # if batch.shape[1]%2 !=t 0 || batch.shape[2]%2 != 0:
+    canyed = np.zeros((batch.shape[0], batch.shape[1] , batch.shape[2]))
+    for i in range(batch.shape[0]):
+        canyed[i, :, :] = cany_oper(batch[i, :, :, :])
+    return canyed
+
 def downsample(image, factor):
     """Downsampling function which matches photoshop"""
     return scipy.misc.imresize(image, 1.0 / factor, interp='bicubic')
