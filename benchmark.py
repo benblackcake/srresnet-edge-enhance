@@ -34,7 +34,7 @@ class Benchmark:
         """Given a list of file names, return a list of images"""
         out = []
         for image in images:
-            out.append(cv2.imread(image))
+            out.append(cv2.imread(image).astype(np.uint8))
         return out
 
     def deprocess(self, image):
