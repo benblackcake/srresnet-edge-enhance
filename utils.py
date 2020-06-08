@@ -29,7 +29,8 @@ def cany_oper(image):
     return edges
 
 def sobel_oper(image):
-
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    
     x = cv2.Sobel(image,cv2.CV_16S,1,0)
     y = cv2.Sobel(image,cv2.CV_16S,0,1)
      
