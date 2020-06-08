@@ -37,6 +37,8 @@ def sobel_oper(image):
     absY = cv2.convertScaleAbs(y)
      
     dst = cv2.addWeighted(absX,0.5,absY,0.5,0)
+    print("__sobeled shape__")
+    print(dst.shape)
     return dst 
 
 def sobel_oper_batch(batch):
@@ -107,7 +109,7 @@ def evaluate_model(loss_function, get_batch, sess, num_images, batch_size):
 
         batch_lr_edge = sobel_oper_batch(batch_lr)
         batch_lr_edge = np.expand_dims(batch_lr_edge,axis=-1)/255. #normalize
-        
+
         batch_lr, batch_hr = preprocess(batch_lr, batch_hr)
         loss += sess.run(loss_function,
                          feed_dict={'srresnet_training:0': False,\
