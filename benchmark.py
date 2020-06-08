@@ -3,7 +3,7 @@ import glob
 import os
 
 # from scipy import misc
-# from skimage.measure import compare_ssim
+from skimage.measure import compare_ssim, compare_psnr
 # from skimage.color import rgb2ycbcr, rgb2yuv
 # from skimage.measure import compare_psnr
 
@@ -56,10 +56,12 @@ class Benchmark:
         # mse = np.mean((pred - gt)**2)
         # psnr = 10*np.log10(255*255/mse)
         # return psnr
-        return calculate_psnr(gt, pred)
+        # return calculate_psnr(gt, pred)
+        return compare_psnr(gt, pred, data_range=255)
 
     def SSIM(self, gt, pred):
-        ssim = calculate_ssim(gt, pred)
+        # ssim = calculate_ssim(gt, pred)
+        ssim = compare_ssim(gt, pred, data_range=255, gaussian_weights=True)
         return ssim
 
     def test_images(self, gt, pred):
