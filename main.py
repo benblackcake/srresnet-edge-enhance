@@ -8,6 +8,7 @@ from tqdm import tqdm,trange
 import matplotlib.pyplot as plt
 import srresnet
 from utils import downsample_batch,build_log_dir,preprocess,evaluate_model,get_data_set, sobel_oper_batch
+import numpy as np
 
 def main():
     parser = argparse.ArgumentParser()
