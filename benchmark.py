@@ -7,7 +7,7 @@ from skimage.color import rgb2ycbcr, rgb2yuv
 
 from skimage.measure import compare_psnr
 from utils import preprocess, downsample
-
+from PIL import Image
 
 class Benchmark:
     """A collection of images to test a model on."""
@@ -33,7 +33,7 @@ class Benchmark:
         """Given a list of file names, return a list of images"""
         out = []
         for image in images:
-            out.append(misc.imread(image, mode='RGB').astype(np.uint8))
+            out.append(Image.open(image).convert('RGB').astype(np.uint8))
         return out
 
     def deprocess(self, image):
@@ -43,7 +43,7 @@ class Benchmark:
 
     def luminance(self, image):
         # Get luminance
-        lum = rgb2ycbcr(image)[:, :, 0]
+        lum = image.convert('YCbCr')(image)[:, :, 0]
         # Crop off 4 border pixels
         lum = lum[4:lum.shape[0] - 4, 4:lum.shape[1] - 4]
         # lum = lum.astype(np.float64)
@@ -95,7 +95,9 @@ class Benchmark:
     def save_image(self, image, path):
         if not os.path.exists(os.path.split(path)[0]):
             os.makedirs(os.path.split(path)[0])
-        misc.toimage(image, cmin=0, cmax=255).save(path)
+        result = Image.fromarray(image).astype(np.uint8)
+        result.save(path)
+        # misc.toimage(image, cmin=0, cmax=255).save(path)
 
     def save_images(self, images, log_path, iteration):
         count = 0
