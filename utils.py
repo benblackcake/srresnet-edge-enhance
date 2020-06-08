@@ -13,6 +13,7 @@ import scipy.ndimage
 import glob
 import h5py
 import cv2
+from skimage.color import rgb2gray
 
 
 def cany_oper(image):
@@ -29,17 +30,17 @@ def cany_oper(image):
     return edges
 
 def sobel_oper(image):
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    
+    image = rgb2gray(image)
+
     x = cv2.Sobel(image,cv2.CV_16S,1,0)
     y = cv2.Sobel(image,cv2.CV_16S,0,1)
      
     absX = cv2.convertScaleAbs(x)
     absY = cv2.convertScaleAbs(y)
      
-    dst = cv2.addWeighted(absX,0.5,absY,0.5,0)
-    print("__sobeled shape__")
-    print(dst.shape)
+    dst = cv2.addWeighted(absX,0.5,absY,0.5,0).astype(np.uint8)
+    # print("__sobeled shape__")
+    # print(dst.shape)
     return dst 
 
 def sobel_oper_batch(batch):
