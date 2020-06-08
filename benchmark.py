@@ -33,7 +33,7 @@ class Benchmark:
         """Given a list of file names, return a list of images"""
         out = []
         for image in images:
-            out.append(Image.open(image).convert('RGB').astype(np.uint8))
+            out.append(Image.open(image).convert('RGB'))
         return out
 
     def deprocess(self, image):
