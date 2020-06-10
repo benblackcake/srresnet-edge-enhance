@@ -45,11 +45,12 @@ def main():
                               content_loss=args.content_loss)
 
     hr_y = tf.placeholder(tf.float32, [None, None, None, 3], name='HR_image')
+    hr_edge = tf.placeholder(tf.float32, [None, None, None, 1], name='HR_edge')
     lr_edge = tf.placeholder(tf.float32, [None, None, None, 1], name='LR_edge')
     lr_x = tf.placeholder(tf.float32, [None, None, None, 3], name='LR_image')
 
     sr_pred,sr_edge_pred = srresnet_model.forward(lr_x, lr_edge)
-    sr_loss = srresnet_model.loss_function(hr_y, sr_pred, sr_edge_pred)
+    sr_loss = srresnet_model.loss_function(hr_y, sr_pred, hr_edge, sr_edge_pred)
     sr_opt = srresnet_model.optimize(sr_loss)
 
     benchmarks = [Benchmark('Benchmarks/Set5', name='Set5'),
@@ -140,6 +141,8 @@ def main():
                     
                     # Train Srresnet   
                     batch_hr = train_data_set[batch_idx:batch_idx + 16]
+                    batch_hr_edge = sobel_oper_batch(batch_hr)
+                    batch_hr_edge = np.expand_dims(batch_hr_edge,axis=-1)/255. #normalize
 
                     batch_lr = downsample_batch(batch_hr, factor=4)
                     batch_lr_edge = sobel_oper_batch(batch_lr)
@@ -151,7 +154,8 @@ def main():
                          feed_dict={srresnet_training: True,\
                                     lr_x: batch_lr,\
                                     hr_y: batch_hr,\
-                                    lr_edge: batch_lr_edge
+                                    lr_edge: batch_lr_edge,\
+                                    hr_edge: batch_hr_edge
                                     })
 
                     #print('__training__ %s' % iteration)
