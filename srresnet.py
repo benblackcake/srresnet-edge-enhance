@@ -77,6 +77,8 @@ class Srresnet:
                     initializer=tf.glorot_normal_initializer()),
                 'w_out':tf.get_variable(name='w_out', shape=[9, 9, 64, 3], dtype=tf.float32,\
                     initializer=tf.glorot_normal_initializer()),
+                'w_edge_out':tf.get_variable(name='w_edge_out', shape=[3, 3, 64, 1], dtype=tf.float32,\
+                    initializer=tf.glorot_normal_initializer()),
             }
 
             # print(x_concate)
@@ -94,12 +96,13 @@ class Srresnet:
             for i in range(self.num_upsamples):
                 x = self.Upsample2xBlock(x, kernel_size=3, filter_size=256)
 
-            x = tf.nn.conv2d(x, weights['w_out'], strides=[1,1,1,1], padding='SAME', name='y_predict')
+            x_conv_out = tf.nn.conv2d(x, weights['w_out'], strides=[1,1,1,1], padding='SAME', name='y_predict')
+            x_edge_out = tf.nn.conv2d(x, weights['w_edge_out'], strides=[1,1,1,1], padding='SAME', name='y_edge_predict')
 
             print(x)
-            return x
+            return x_conv_out, x_edge_out
 
-    def _content_loss(self, y, y_pred):
+    def _content_loss(self, y, y_pred, y_edge_pred):
         """MSE, VGG22, or VGG54"""
         if self.content_loss == 'mse':
             return tf.reduce_mean(tf.square(y - y_pred))
@@ -111,18 +114,18 @@ class Srresnet:
             lamd = 0.5
             y_sobeled = tf.image.sobel_edges(y)
             y_pred_sobeled = tf.image.sobel_edges(y_pred)
-            return tf.reduce_mean(tf.square(y - y_pred)) + (lamd*tf.reduce_mean(tf.square(y_sobeled - y_pred_sobeled)))
+            return tf.reduce_mean(tf.square(y - y_pred)) + (lamd*tf.reduce_mean(tf.square(y_sobeled - y_edge_pred)))
 
         if self.content_loss == 'edge_loss_L1':
             lamd = 0.5
             y_sobeled = tf.image.sobel_edges(y)
             y_pred_sobeled = tf.image.sobel_edges(y_pred)
-            return tf.reduce_mean(tf.abs(y - y_pred)) + (lamd*tf.reduce_mean(tf.square(y_sobeled - y_pred_sobeled)))
+            return tf.reduce_mean(tf.abs(y - y_pred)) + (lamd*tf.reduce_mean(tf.square(y_sobeled - y_edge_pred)))
 
-    def loss_function(self, y, y_pred):
+    def loss_function(self, y, y_pred, y_edge_pred):
 
         # Content loss only
-        return self._content_loss(y, y_pred)
+        return self._content_loss(y, y_pred, y_edge_pred)
 
     def optimize(self, loss):
         # tf.control_dependencies([discrim_train
