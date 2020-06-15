@@ -30,12 +30,9 @@ class Srresnet:
         """Residual block a la ResNet"""
         # with tf.variable_scope('sr_edge_net') as scope:		
         weights = {
-            'w1':tf.get_variable(name='w1_redidual',\
-                shape=[kernel_size, kernel_size, filter_size, filter_size], dtype=tf.float32,\
-                initializer=tf.glorot_normal_initializer()),
-            'w2':tf.get_variable(name='w2_residual',\
-                shape=[kernel_size, kernel_size, filter_size, filter_size], dtype=tf.float32,\
-                initializer=tf.glorot_normal_initializer()),
+            'w1': tf.Variable(tf.random_normal([kernel_size, kernel_size,filter_size, filter_size], stddev=1e-3), name='w1_redidual'),
+            'w2': tf.Variable(tf.random_normal([kernel_size, kernel_size,filter_size, filter_size], stddev=1e-3), name='w2_residual'),
+
         }
 
         skip = x
@@ -51,9 +48,7 @@ class Srresnet:
 
     def Upsample2xBlock(self, x, kernel_size, filter_size):
         weights = {
-        'w1':tf.get_variable(name='w1_upsample',\
-            shape=[kernel_size, kernel_size, 64, filter_size], dtype=tf.float32,\
-            initializer=tf.glorot_normal_initializer()),
+            'w1': tf.Variable(tf.random_normal([kernel_size, kernel_size,64, filter_size], stddev=1e-3), name='w1_upsample'),
         }
         """Upsample 2x via SubpixelConv"""
         print('init',x)
@@ -71,15 +66,12 @@ class Srresnet:
             x = tf.concat([x, x_edge],axis=3, name='x_input_concate')
 
             weights = {
-                'w_in':tf.get_variable(name='w_in', shape=[9, 9, 4, 64], dtype=tf.float32,\
-                    initializer=tf.glorot_normal_initializer()),
-                'w1':tf.get_variable(name='w1', shape=[3, 3, 64, 64], dtype=tf.float32,\
-                    initializer=tf.glorot_normal_initializer()),
-                'w_out':tf.get_variable(name='w_out', shape=[9, 9, 64, 3], dtype=tf.float32,\
-                    initializer=tf.glorot_normal_initializer()),
-                'w_edge_out':tf.get_variable(name='w_edge_out', shape=[3, 3, 64, 1], dtype=tf.float32,\
-                    initializer=tf.glorot_normal_initializer()),
+                'w_in': tf.Variable(tf.random_normal([9, 9, 3, 64], stddev=1e-3), name='w_in'),
+                'w1': tf.Variable(tf.random_normal([3, 3, 64, 64], stddev=1e-3), name='w1'),
+                'w_out': tf.Variable(tf.random_normal([9, 9, 64, 3], stddev=1e-3), name='w_out'),
+                'w_edge_out': tf.Variable(tf.random_normal([3, 3, 64, 1], stddev=1e-3), name='w_edge_out'),
             }
+
 
             # print(x_concate)
             x = tf.nn.conv2d(x, weights['w_in'], strides=[1,1,1,1], padding='SAME')
