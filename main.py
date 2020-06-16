@@ -55,9 +55,7 @@ def main():
 
     benchmarks = [Benchmark('Benchmarks/Set5', name='Set5'),
               Benchmark('Benchmarks/Set14', name='Set14'),
-              Benchmark('Benchmarks/BSD100', name='BSD100'),
-              Benchmark('Benchmarks/UCMerced_LandUse', name='UCMerced_LandUse'),
-              Benchmark('Benchmarks/UCMerced_LandUse_S', name='UCMerced_LandUse_S')
+              Benchmark('Benchmarks/BSD100', name='BSD100')
               ]
 
     if args.validate_benchmarks:
@@ -100,6 +98,13 @@ def main():
         fig = plt.figure()
         
         if args.is_val:
+            benchmarks = [
+                Benchmark('Benchmarks/Set5', name='Set5'),
+                Benchmark('Benchmarks/Set14', name='Set14'),
+                Benchmark('Benchmarks/BSD100', name='BSD100'),
+                Benchmark('Benchmarks/UCMerced_LandUse', name='UCMerced_LandUse'),
+                Benchmark('Benchmarks/UCMerced_LandUse_S', name='UCMerced_LandUse_S')
+            ]
 
             log_line = ''
             for benchmark in benchmarks:
