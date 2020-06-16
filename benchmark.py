@@ -6,7 +6,7 @@ from skimage.measure import compare_ssim
 from skimage.color import rgb2ycbcr, rgb2yuv
 
 from skimage.measure import compare_psnr
-from utils import preprocess, downsample, sobel_oper
+from utils import preprocess, downsample, sobel_oper, modcrop
 
 
 class Benchmark:
@@ -21,19 +21,20 @@ class Benchmark:
         for img in self.images_hr:
             self.images_lr.append(downsample(img, 4))
 
-    def load_images_by_model(self, model, file_format='png'):
+    def load_images_by_model(self, model, file_format='*'):
         """Loads all images that match '*_{model}.{file_format}' and returns sorted list of filenames and names"""
         # Get files that match the pattern
-        filenames = sorted(glob.glob(os.path.join(self.path, '*_' + model + '.' + file_format)))
+        filenames = glob.glob(os.path.join(self.path, '*_' + model + '.' + file_format))
         # Extract name/prefix eg: '/.../baby_LR.png' -> 'baby'
         names = [os.path.basename(x).split('_')[0] for x in filenames]
+        print(names)
         return self.load_images(filenames), names
 
     def load_images(self, images):
         """Given a list of file names, return a list of images"""
         out = []
         for image in images:
-            out.append(misc.imread(image, mode='RGB').astype(np.uint8))
+            out.append(modcrop(misc.imread(image, mode='RGB').astype(np.uint8)))
         return out
 
     def deprocess(self, image):
@@ -55,6 +56,7 @@ class Benchmark:
         # mse = np.mean((pred - gt)**2)
         # psnr = 10*np.log10(255*255/mse)
         # return psnr
+
         return compare_psnr(gt, pred, data_range=255)
 
     def SSIM(self, gt, pred):
@@ -62,13 +64,21 @@ class Benchmark:
         return ssim
 
     def test_images(self, gt, pred):
+
         """Applies metrics to compare image lists pred vs gt"""
         avg_psnr = 0
         avg_ssim = 0
         individual_psnr = []
         individual_ssim = []
 
+        print('__debug__')
+        print(len(gt))
+        print(len(pred))
+
         for i in range(len(pred)):
+            print(gt[i].shape)
+            print(pred[i].shape)
+            print(i)
             # compare to gt
             psnr = self.PSNR(self.luminance(gt[i]), self.luminance(pred[i]))
             ssim = self.SSIM(self.luminance(gt[i]), self.luminance(pred[i]))
@@ -126,7 +136,7 @@ class Benchmark:
 
             lr = lr / 255.0
             # print(lr.shape)
-            # print(lr[np.newaxis].shape)
+            print(lr[np.newaxis].shape)
             output = sess.run(y_pred, feed_dict={'srresnet_training:0': False,\
                                                 'LR_image:0': lr[np.newaxis],\
                                                 'LR_edge:0': lr_edge[np.newaxis]
@@ -136,6 +146,8 @@ class Benchmark:
             lr[np.newaxis].shape=(1,128,128,3)
             '''
             # deprocess output
+            print('__deprocess output__')
+            print(self.deprocess(np.squeeze(output, axis=0)).shape)
             pred.append(self.deprocess(np.squeeze(output, axis=0)))
         # save images
         if log_path:

@@ -132,3 +132,22 @@ def get_data_set(path,label):
     f = h5py.File(path, 'r')
     data = f[label]
     return data
+
+
+def modcrop(img, scale =4):
+    """
+    To scale down and up the original image, first thing to do is to have no remainder while scaling operation.
+    """
+    # Check the image is gray
+
+    if len(img.shape) ==3:
+        h, w, _ = img.shape
+        h = h - np.mod(h, scale)
+        w = w - np.mod(w, scale)
+        img = img[0:h, 0:w, :]
+    else:
+        h, w = img.shape
+        h = h - np.mod(h, scale)
+        w = w - np.mod(w, scale)
+        img = img[0:h, 0:w]
+    return img

@@ -55,7 +55,10 @@ def main():
 
     benchmarks = [Benchmark('Benchmarks/Set5', name='Set5'),
               Benchmark('Benchmarks/Set14', name='Set14'),
-              Benchmark('Benchmarks/BSD100', name='BSD100')]
+              Benchmark('Benchmarks/BSD100', name='BSD100'),
+              Benchmark('Benchmarks/UCMerced_LandUse', name='UCMerced_LandUse'),
+              Benchmark('Benchmarks/UCMerced_LandUse_S', name='UCMerced_LandUse_S')
+              ]
 
     if args.validate_benchmarks:
         for benchmark in benchmarks:
@@ -97,9 +100,18 @@ def main():
         fig = plt.figure()
         
         if args.is_val:
+
+            log_line = ''
             for benchmark in benchmarks:
-                psnr, ssim, _, _ = benchmark.eval(sess, g_y_pred, log_path, iteration)
+                psnr, ssim, _, _ = benchmark.evaluate(sess, sr_pred, log_path, iteration)
                 print(' [%s] PSNR: %.2f, SSIM: %.4f' % (benchmark.name, psnr, ssim), end='')
+                log_line += ',%.7f, %.7f' % (psnr, ssim)
+            print()
+            # Write to log
+            # with open(log_path + '/loss.csv', 'a') as f:
+                # f.write('%d,\n' % (iteration, log_line))
+            # Save checkpoint
+            # saver.save(sess, os.path.join(log_path, 'weights'), global_step=iteration, write_meta_graph=False)
 
         else:
             while True:
