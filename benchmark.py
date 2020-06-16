@@ -27,7 +27,6 @@ class Benchmark:
         filenames = glob.glob(os.path.join(self.path, '*_' + model + '.' + file_format))
         # Extract name/prefix eg: '/.../baby_LR.png' -> 'baby'
         names = [os.path.basename(x).split('_')[0] for x in filenames]
-        print(names)
         return self.load_images(filenames), names
 
     def load_images(self, images):
@@ -71,14 +70,7 @@ class Benchmark:
         individual_psnr = []
         individual_ssim = []
 
-        print('__debug__')
-        print(len(gt))
-        print(len(pred))
-
         for i in range(len(pred)):
-            print(gt[i].shape)
-            print(pred[i].shape)
-            print(i)
             # compare to gt
             psnr = self.PSNR(self.luminance(gt[i]), self.luminance(pred[i]))
             ssim = self.SSIM(self.luminance(gt[i]), self.luminance(pred[i]))
@@ -135,8 +127,6 @@ class Benchmark:
             lr_edge = lr_edge / 255.0
 
             lr = lr / 255.0
-            # print(lr.shape)
-            print(lr[np.newaxis].shape)
             output = sess.run(y_pred, feed_dict={'srresnet_training:0': False,\
                                                 'LR_image:0': lr[np.newaxis],\
                                                 'LR_edge:0': lr_edge[np.newaxis]
@@ -146,8 +136,6 @@ class Benchmark:
             lr[np.newaxis].shape=(1,128,128,3)
             '''
             # deprocess output
-            print('__deprocess output__')
-            print(self.deprocess(np.squeeze(output, axis=0)).shape)
             pred.append(self.deprocess(np.squeeze(output, axis=0)))
         # save images
         if log_path:
