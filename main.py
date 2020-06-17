@@ -53,10 +53,11 @@ def main():
     sr_loss = srresnet_model.loss_function(hr_y, sr_pred, hr_edge, sr_edge_pred)
     sr_opt = srresnet_model.optimize(sr_loss)
 
-    benchmarks = [Benchmark('Benchmarks/Set5', name='Set5'),
-              Benchmark('Benchmarks/Set14', name='Set14'),
-              Benchmark('Benchmarks/BSD100', name='BSD100')
-              ]
+    benchmarks = [
+        Benchmark('Benchmarks/Set5', name='Set5'),
+        Benchmark('Benchmarks/Set14', name='Set14'),
+        Benchmark('Benchmarks/BSD100', name='BSD100')
+    ]
 
     if args.validate_benchmarks:
         for benchmark in benchmarks:
@@ -113,8 +114,12 @@ def main():
                 log_line += ',%.7f, %.7f' % (psnr, ssim)
             print()
             # Write to log
-            # with open(log_path + '/loss.csv', 'a') as f:
-                # f.write('%d,\n' % (iteration, log_line))
+            with open(log_path + '/PSNR.csv', 'a') as f:
+                f.write(
+                    'iteration, set5_psnr, set5_ssim, set14_psnr, set14_ssim, bsd100_psnr, bsd100_ssim,\
+                     UCMerced_LandUse_psnr, UCMerced_LandUse_ssim,UCMerced_LandUse_S_psnr, UCMerced_LandUse_S_ssim\n'
+                 )
+                f.write('%d,%s\n' % (iteration, log_line))
             # Save checkpoint
             # saver.save(sess, os.path.join(log_path, 'weights'), global_step=iteration, write_meta_graph=False)
 
