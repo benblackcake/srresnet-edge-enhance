@@ -104,7 +104,7 @@ def main():
                 Benchmark('Benchmarks/Set14', name='Set14'),
                 Benchmark('Benchmarks/BSD100', name='BSD100'),
                 Benchmark('Benchmarks/UCMerced_LandUse', name='UCMerced_LandUse'),
-                Benchmark('Benchmarks/UCMerced_LandUse_S', name='UCMerced_LandUse_S')
+                Benchmark('Benchmarks/RSSCN7', name='RSSCN7')
             ]
 
             log_line = ''
@@ -116,8 +116,7 @@ def main():
             # Write to log
             with open(log_path + '/PSNR.csv', 'a') as f:
                 f.write(
-                    'iteration, set5_psnr, set5_ssim, set14_psnr, set14_ssim, bsd100_psnr, bsd100_ssim,\
-                     UCMerced_LandUse_psnr, UCMerced_LandUse_ssim,UCMerced_LandUse_S_psnr, UCMerced_LandUse_S_ssim\n'
+                    'iteration, set5_psnr, set5_ssim, set14_psnr, set14_ssim, bsd100_psnr, bsd100_ssim,UCMerced_LandUse_psnr, UCMerced_LandUse_ssim,RSSCN7_psnr, RSSCN7_ssim\n'
                  )
                 f.write('%d,%s\n' % (iteration, log_line))
             # Save checkpoint
