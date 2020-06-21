@@ -60,6 +60,18 @@ class Srresnet:
         x = tf.contrib.keras.layers.PReLU(shared_axes=[1, 2])(x)
         return x
 
+    def sr_edge_conv(self,x):
+        weights = {
+            'w1': tf.Variable(tf.random_normal([9, 9, 1, 64], stddev=1e-3), name='w1'),
+            'w2': tf.Variable(tf.random_normal([1, 1, 64, 32], stddev=1e-3), name='w2'),
+            'w3': tf.Variable(tf.random_normal([5, 5, 32, 1], stddev=1e-3), name='w3'),
+        }
+        x = tf.nn.relu(tf.nn.conv2d(x, weights['w1'], strides=[1,1,1,1], padding='SAME'))
+        x = tf.nn.relu(tf.nn.conv2d(x, weights['w2'], strides=[1,1,1,1], padding='SAME'))
+        x = tf.nn.relu(tf.nn.conv2d(x, weights['w3'], strides=[1,1,1,1], padding='SAME'))
+
+        return x
+
 
     def forward(self, x, x_edge):
         with tf.variable_scope('srresnet_edge',reuse=tf.AUTO_REUSE) as scope:
@@ -67,13 +79,15 @@ class Srresnet:
 
             weights = {
                 'w_in': tf.Variable(tf.random_normal([9, 9, 4, 64], stddev=1e-3), name='w_in'),
-                'w1': tf.Variable(tf.random_normal([3, 3, 64, 64], stddev=1e-3), name='w1'),
+                'w1': tf.Variable(tf.random_normal([3, 3, 65, 64], stddev=1e-3), name='w1'),
                 'w_out': tf.Variable(tf.random_normal([9, 9, 64, 3], stddev=1e-3), name='w_out'),
                 'w_edge_out': tf.Variable(tf.random_normal([3, 3, 64, 1], stddev=1e-3), name='w_edge_out'),
             }
 
 
             # print(x_concate)
+            x_edge_conv = self.sr_edge_conv(x_edge)
+
             x = tf.nn.conv2d(x, weights['w_in'], strides=[1,1,1,1], padding='SAME')
             x = tf.contrib.keras.layers.PReLU(shared_axes=[1, 2])(x)
             skip = x
@@ -81,6 +95,7 @@ class Srresnet:
             for i in range(self.num_blocks):
                 x = self.ResidualBlock(x, 3, 64)
 
+            x = tf.concat([x, x_edge_conv],axis=3, name='x_edge_concat')
             x = tf.nn.conv2d(x, weights['w1'], strides=[1,1,1,1], padding='SAME', name='layer_1')
             x = tf.layers.batch_normalization(x, training=self.training)
             x = x + skip
