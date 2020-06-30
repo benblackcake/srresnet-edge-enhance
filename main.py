@@ -80,7 +80,7 @@ def main():
         iteration = 0
         epoch = 0
 
-        saver = tf.train.Saver(max_to_keep=50)
+        saver = tf.train.Saver(max_to_keep=100)
 
         # Load all
         if args.load:
