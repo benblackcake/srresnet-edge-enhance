@@ -38,9 +38,9 @@ class Srresnet:
         skip = x
         x = tf.nn.conv2d(x, weights['w1'], strides=[1,1,1,1], padding='SAME')
         x = tf.layers.batch_normalization(x, training=self.training)
-        x = tf.contrib.keras.layers.PReLU(shared_axes=[1, 2])(x)
+        x = tf.nn.relu(x)
         x = tf.nn.conv2d(x, weights['w2'], strides=[1,1,1,1], padding='SAME')
-        x = tf.contrib.keras.layers.PReLU(shared_axes=[1, 2])(x)
+        x = tf.nn.relu(x)
         x = tf.layers.batch_normalization(x, training=self.training)
 
         x = x + skip
@@ -57,7 +57,7 @@ class Srresnet:
         x = tf.depth_to_space(x, 2)
         print('after',x)
 
-        x = tf.contrib.keras.layers.PReLU(shared_axes=[1, 2])(x)
+        x = tf.nn.relu(x)
         return x
 
     def sr_edge_conv(self,x):
@@ -89,7 +89,7 @@ class Srresnet:
             x_edge_conv = self.sr_edge_conv(x_edge)
 
             x = tf.nn.conv2d(x, weights['w_in'], strides=[1,1,1,1], padding='SAME')
-            x = tf.contrib.keras.layers.PReLU(shared_axes=[1, 2])(x)
+            x = tf.nn.relu(x)
             skip = x
 
             for i in range(self.num_blocks):
