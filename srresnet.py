@@ -64,7 +64,7 @@ class Srresnet:
         weights = {
             'w1': tf.Variable(tf.random_normal([9, 9, 1, 64], stddev=1e-3), name='w1'),
             'w2': tf.Variable(tf.random_normal([1, 1, 64, 32], stddev=1e-3), name='w2'),
-            'w3': tf.Variable(tf.random_normal([5, 5, 32, 1], stddev=1e-3), name='w3'),
+            'w3': tf.Variable(tf.random_normal([5, 5, 32, 64], stddev=1e-3), name='w3'),
         }
         x = tf.nn.relu(tf.nn.conv2d(x, weights['w1'], strides=[1,1,1,1], padding='SAME'))
         x = tf.nn.relu(tf.nn.conv2d(x, weights['w2'], strides=[1,1,1,1], padding='SAME'))
@@ -79,7 +79,7 @@ class Srresnet:
 
             weights = {
                 'w_in': tf.Variable(tf.random_normal([9, 9, 3, 64], stddev=1e-3), name='w_in'),
-                'w1': tf.Variable(tf.random_normal([3, 3, 65, 64], stddev=1e-3), name='w1'),
+                'w1': tf.Variable(tf.random_normal([3, 3, 64, 64], stddev=1e-3), name='w1'),
                 'w_out': tf.Variable(tf.random_normal([9, 9, 64, 3], stddev=1e-3), name='w_out'),
                 'w_edge_out': tf.Variable(tf.random_normal([3, 3, 64, 1], stddev=1e-3), name='w_edge_out'),
             }
@@ -87,6 +87,11 @@ class Srresnet:
 
             # print(x_concate)
             x_edge_conv = self.sr_edge_conv(x_edge)
+            print('__DEBUG__',x_edge_conv)
+            for i in range(self.num_upsamples):
+                x_edge_conv = self.Upsample2xBlock(x_edge_conv, kernel_size=3, filter_size=256)
+            x_edge_conv = tf.nn.conv2d(x_edge_conv, weights['w_edge_out'], strides=[1,1,1,1], padding='SAME', name='y_edge_predict')
+            print('__DEBUG__',x_edge_conv)
 
             x = tf.nn.conv2d(x, weights['w_in'], strides=[1,1,1,1], padding='SAME')
             x = tf.nn.relu(x)
@@ -95,7 +100,6 @@ class Srresnet:
             for i in range(self.num_blocks):
                 x = self.ResidualBlock(x, 3, 64)
 
-            x = tf.concat([x, x_edge_conv],axis=3, name='x_edge_concat')
             x = tf.nn.conv2d(x, weights['w1'], strides=[1,1,1,1], padding='SAME', name='layer_1')
             x = tf.layers.batch_normalization(x, training=self.training)
             x = x + skip
@@ -104,10 +108,9 @@ class Srresnet:
                 x = self.Upsample2xBlock(x, kernel_size=3, filter_size=256)
 
             x_conv_out = tf.nn.conv2d(x, weights['w_out'], strides=[1,1,1,1], padding='SAME', name='y_predict')
-            x_edge_out = tf.nn.conv2d(x, weights['w_edge_out'], strides=[1,1,1,1], padding='SAME', name='y_edge_predict')
-
+            x_conv_out = x_conv_out + x_edge_conv
             print(x)
-            return x_conv_out, x_edge_out
+            return x_conv_out, x_edge_conv
 
     def _content_loss(self, y, y_pred, y_edge, y_edge_pred):
         """MSE, VGG22, or VGG54"""
