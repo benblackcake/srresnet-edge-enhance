@@ -25,7 +25,7 @@ def cany_oper(image):
     gray_img = rgb2gray(image)
     blur_gray = cv2.GaussianBlur(gray_img,(kernel_size, kernel_size), 0).astype(np.uint8)
 
-    edges = cv2.Canny(blur_gray, 30, 150)
+    edges = cv2.Canny(blur_gray, 10, 50)
 
     return edges
 
