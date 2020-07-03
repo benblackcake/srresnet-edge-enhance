@@ -7,7 +7,7 @@ import sys
 from tqdm import tqdm,trange
 import matplotlib.pyplot as plt
 import srresnet
-from utils import downsample_batch,build_log_dir,preprocess,evaluate_model,get_data_set, sobel_oper_batch
+from utils import downsample_batch,build_log_dir,preprocess,evaluate_model,get_data_set, sobel_oper_batch, cany_oper_batch
 import numpy as np
 
 def main():
@@ -162,11 +162,11 @@ def main():
                     
                     # Train Srresnet   
                     batch_hr = train_data_set[batch_idx:batch_idx + 16]
-                    batch_hr_edge = sobel_oper_batch(batch_hr)
+                    batch_hr_edge = cany_oper_batch(batch_hr)
                     batch_hr_edge = np.expand_dims(batch_hr_edge,axis=-1)/255. #normalize
 
                     batch_lr = downsample_batch(batch_hr, factor=4)
-                    batch_lr_edge = sobel_oper_batch(batch_lr)
+                    batch_lr_edge = cany_oper_batch(batch_lr)
                     batch_lr_edge = np.expand_dims(batch_lr_edge,axis=-1)/255. #normalize
 
                     batch_lr, batch_hr = preprocess(batch_lr, batch_hr)

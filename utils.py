@@ -22,10 +22,10 @@ def cany_oper(image):
     low_threshold = 1
     high_threshold = 10
 
-    gray_img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    blur_gray = cv2.GaussianBlur(gray_img,(kernel_size, kernel_size), 0)
+    gray_img = rgb2gray(image)
+    blur_gray = cv2.GaussianBlur(gray_img,(kernel_size, kernel_size), 0).astype(np.uint8)
 
-    edges = cv2.Canny(blur_gray, low_threshold, high_threshold)
+    edges = cv2.Canny(blur_gray, 30, 150)
 
     return edges
 
@@ -107,12 +107,12 @@ def evaluate_model(loss_function, get_batch, sess, num_images, batch_size):
     total = 0
     for i in range(int(math.ceil(num_images / batch_size))):
         batch_hr = get_batch
-        batch_hr_edge = sobel_oper_batch(batch_hr)
+        batch_hr_edge = cany_oper_batch(batch_hr)
         batch_hr_edge = np.expand_dims(batch_hr_edge,axis=-1)/255. #normalize
 
         batch_lr = downsample_batch(batch_hr, factor=4)
 
-        batch_lr_edge = sobel_oper_batch(batch_lr)
+        batch_lr_edge = cany_oper_batch(batch_lr)
         batch_lr_edge = np.expand_dims(batch_lr_edge,axis=-1)/255. #normalize
 
         batch_lr, batch_hr = preprocess(batch_lr, batch_hr)
