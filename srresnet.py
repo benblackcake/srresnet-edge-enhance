@@ -69,7 +69,7 @@ class Srresnet:
         biases = {
             'b1': tf.Variable(tf.zeros([64], name='b1')),
             'b2': tf.Variable(tf.zeros([32], name='b2')),
-            'b3': tf.Variable(tf.zeros([64], name='b3'))
+            'b3': tf.Variable(tf.zeros([1], name='b3'))
         }
 
         x = tf.nn.relu(tf.nn.conv2d(x, weights['w1'], strides=[1,1,1,1], padding='SAME')) + biases['b1']
