@@ -69,9 +69,15 @@ class Srresnet:
             'w2': tf.Variable(tf.random_normal([1, 1, 64, 32], stddev=1e-3), name='w2'),
             'w3': tf.Variable(tf.random_normal([5, 5, 32, 64], stddev=1e-3), name='w3'),
         }
-        x = tf.nn.relu(tf.nn.conv2d(x, weights['w1'], strides=[1,1,1,1], padding='SAME'))
-        x = tf.nn.relu(tf.nn.conv2d(x, weights['w2'], strides=[1,1,1,1], padding='SAME'))
-        x = tf.nn.relu(tf.nn.conv2d(x, weights['w3'], strides=[1,1,1,1], padding='SAME'))
+        biases = {
+            'b1': tf.Variable(tf.zeros([64], name='b1')),
+            'b2': tf.Variable(tf.zeros([32], name='b2')),
+            'b3': tf.Variable(tf.zeros([64], name='b3'))
+        }
+
+        x = tf.nn.relu(tf.nn.conv2d(x, weights['w1'], strides=[1,1,1,1], padding='SAME')) + biases['b1']
+        x = tf.nn.relu(tf.nn.conv2d(x, weights['w2'], strides=[1,1,1,1], padding='SAME')) + biases['b2']
+        x = tf.nn.relu(tf.nn.conv2d(x, weights['w3'], strides=[1,1,1,1], padding='SAME')) + biases['b3']
 
         return x
 
