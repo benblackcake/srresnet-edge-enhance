@@ -151,7 +151,7 @@ def main():
 
                         # print('[%d] Test: %.7f, Train: %.7f' % (iteration, val_error, eval_error), end='')
                         # Evaluate benchmarks
-                        # log_line = ''
+                        log_line = ''
                         for benchmark in benchmarks:
                             psnr, ssim, _, _ = benchmark.evaluate(sess, sr_pred, log_path, iteration)
                         #     # benchmark.evaluate(sess, sr_pred, log_path, iteration)
