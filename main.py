@@ -180,17 +180,17 @@ def main():
                     dwt_cr_channel = tf_dwt(np.float32(batch_hr_cr/255.), in_size=[16,96,96,1])
                     dwt_cb_channel = tf_dwt(np.float32(batch_hr_cb/255.), in_size=[16,96,96,1])
                     
-                    A_y_prime = sess.run(tf.expand_dims(dwt_y_channel[:,:,:,0], axis=-1))*255.
+                    A_y_prime = tf.expand_dims(dwt_y_channel[:,:,:,0], axis=-1).eval()*255.
                     B_y_prime = tf.expand_dims(dwt_y_channel[:,:,:,1], axis=-1)
                     C_y_prime = tf.expand_dims(dwt_y_channel[:,:,:,2], axis=-1)
                     D_y_prime = tf.expand_dims(dwt_y_channel[:,:,:,3], axis=-1)
 
-                    A_cr_prime = sess.run(tf.expand_dims(dwt_cr_channel[:,:,:,0], axis=-1))*255.
+                    A_cr_prime = tf.expand_dims(dwt_cr_channel[:,:,:,0], axis=-1).eval()*255.
                     B_cr_prime = tf.expand_dims(dwt_cr_channel[:,:,:,1], axis=-1)
                     C_cr_prime = tf.expand_dims(dwt_cr_channel[:,:,:,2], axis=-1)
                     D_cr_prime = tf.expand_dims(dwt_cr_channel[:,:,:,3], axis=-1)
 
-                    A_cb_prime = sess.run(tf.expand_dims(dwt_cb_channel[:,:,:,0], axis=-1))*255.
+                    A_cb_prime = tf.expand_dims(dwt_cb_channel[:,:,:,0], axis=-1).eval()*255.
                     B_cb_prime = tf.expand_dims(dwt_cb_channel[:,:,:,1], axis=-1)
                     C_cb_prime = tf.expand_dims(dwt_cb_channel[:,:,:,2], axis=-1)
                     D_cb_prime = tf.expand_dims(dwt_cb_channel[:,:,:,3], axis=-1)
@@ -215,8 +215,8 @@ def main():
 
                     concat_sobel = np.concatenate([sobeled_batch_y_lr, sobeled_batch_cr_lr, sobeled_batch_cb_lr], axis=-1)
 
-                    print(concat_dwt_hr.shape)
-                    print(concat_sobel.shape)
+                    # print(concat_dwt_hr.shape)
+                    # print(concat_sobel.shape)
 
 
                     _, err = sess.run([sr_opt,sr_loss],\
