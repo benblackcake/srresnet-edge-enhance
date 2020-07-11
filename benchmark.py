@@ -188,6 +188,7 @@ class Benchmark:
             # print(idwt_output_cb.shape)
 
             result = cv2.merge([idwt_output_y, idwt_output_cr, idwt_output_cb])
+            result = cv2.cvtColor(result, cv2.COLOR_YCrCb2BGR)
             # print(result.shape)
             # cv2.imshow('__DEBUG__', cv2.cvtColor(result, cv2.COLOR_YCrCb2BGR))
             # cv2.waitKey(0)
