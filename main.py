@@ -160,7 +160,7 @@ def main():
                         # print()
                         # # Write to log
                         with open(log_path + '/loss.csv', 'a') as f:
-                            f.write('%d, %.15f, %.15f%s\n' % (iteration, log_line))
+                            f.write('%d, %s\n' % (iteration, log_line))
                         # Save checkpoint
                         saver.save(sess, os.path.join(log_path, 'weights'), global_step=iteration, write_meta_graph=False)
                     
