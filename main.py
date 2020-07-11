@@ -133,7 +133,7 @@ def main():
                     t.set_description("Training... [Iterations: %s]" % iteration)
                     
                     # Each 10000 times evaluate model
-                    if iteration % args.log_freq == 0:
+                    # if iteration % args.log_freq == 0:
                         # Loop over eval dataset
                         # for batch_idx in range(0, len(val_data_set) - args.batch_size + 1, args.batch_size): 
                         # # Test every log-freq iterations
@@ -151,18 +151,18 @@ def main():
 
                         # print('[%d] Test: %.7f, Train: %.7f' % (iteration, val_error, eval_error), end='')
                         # Evaluate benchmarks
-                        log_line = ''
-                        for benchmark in benchmarks:
-                            psnr, ssim, _, _ = benchmark.evaluate(sess, sr_pred, log_path, iteration)
-                            # benchmark.evaluate(sess, sr_pred, log_path, iteration)
-                            print(' [%s] PSNR: %.2f, SSIM: %.4f' % (benchmark.name, psnr, ssim), end='')
+                        # log_line = ''
+                        # for benchmark in benchmarks:
+                        #     psnr, ssim, _, _ = benchmark.evaluate(sess, sr_pred, log_path, iteration)
+                        #     # benchmark.evaluate(sess, sr_pred, log_path, iteration)
+                        #     print(' [%s] PSNR: %.2f, SSIM: %.4f' % (benchmark.name, psnr, ssim), end='')
                         #     log_line += ',%.7f, %.7f' % (psnr, ssim)
                         # print()
                         # # Write to log
                         # with open(log_path + '/loss.csv', 'a') as f:
                         #     f.write('%d, %.15f, %.15f%s\n' % (iteration, val_error, eval_error, log_line))
                         # Save checkpoint
-                        saver.save(sess, os.path.join(log_path, 'weights'), global_step=iteration, write_meta_graph=False)
+                        # saver.save(sess, os.path.join(log_path, 'weights'), global_step=iteration, write_meta_graph=False)
                     
                     # Train SRResnet   
                     batch_hr = train_data_set[batch_idx:batch_idx + 16]
@@ -181,30 +181,30 @@ def main():
                     dwt_cb_channel = tf_dwt(np.float32(batch_hr_cb/255.), in_size=[16,96,96,1])
                     
                     A_y_prime = sess.run(tf.expand_dims(dwt_y_channel[:,:,:,0], axis=-1))*255.
-                    B_y_prime = sess.run(tf.expand_dims(dwt_y_channel[:,:,:,1], axis=-1))
-                    C_y_prime = sess.run(tf.expand_dims(dwt_y_channel[:,:,:,2], axis=-1))
-                    D_y_prime = sess.run(tf.expand_dims(dwt_y_channel[:,:,:,3], axis=-1))
+                    B_y_prime = tf.expand_dims(dwt_y_channel[:,:,:,1], axis=-1)
+                    C_y_prime = tf.expand_dims(dwt_y_channel[:,:,:,2], axis=-1)
+                    D_y_prime = tf.expand_dims(dwt_y_channel[:,:,:,3], axis=-1)
 
                     A_cr_prime = sess.run(tf.expand_dims(dwt_cr_channel[:,:,:,0], axis=-1))*255.
-                    B_cr_prime = sess.run(tf.expand_dims(dwt_cr_channel[:,:,:,1], axis=-1))
-                    C_cr_prime = sess.run(tf.expand_dims(dwt_cr_channel[:,:,:,2], axis=-1))
-                    D_cr_prime = sess.run(tf.expand_dims(dwt_cr_channel[:,:,:,3], axis=-1))
+                    B_cr_prime = tf.expand_dims(dwt_cr_channel[:,:,:,1], axis=-1)
+                    C_cr_prime = tf.expand_dims(dwt_cr_channel[:,:,:,2], axis=-1)
+                    D_cr_prime = tf.expand_dims(dwt_cr_channel[:,:,:,3], axis=-1)
 
                     A_cb_prime = sess.run(tf.expand_dims(dwt_cb_channel[:,:,:,0], axis=-1))*255.
-                    B_cb_prime = sess.run(tf.expand_dims(dwt_cb_channel[:,:,:,1], axis=-1))
-                    C_cb_prime = sess.run(tf.expand_dims(dwt_cb_channel[:,:,:,2], axis=-1))
-                    D_cb_prime = sess.run(tf.expand_dims(dwt_cb_channel[:,:,:,3], axis=-1))
+                    B_cb_prime = tf.expand_dims(dwt_cb_channel[:,:,:,1], axis=-1)
+                    C_cb_prime = tf.expand_dims(dwt_cb_channel[:,:,:,2], axis=-1)
+                    D_cb_prime = tf.expand_dims(dwt_cb_channel[:,:,:,3], axis=-1)
                     # A = tf.cast(tf.clip_by_value(tf.abs(A),0,255), dtype=tf.uint8)
                     A_y_prime = np.clip(np.abs(A_y_prime),0,255).astype(np.uint8)
                     A_cr_prime = np.clip(np.abs(A_cr_prime),0,255).astype(np.uint8)
                     A_cb_prime = np.clip(np.abs(A_cb_prime),0,255).astype(np.uint8)
 
+                    tf.concat
+                    concat_y_BCD = tf.concat([B_y_prime,C_y_prime,D_y_prime], axis=-1)
+                    concat_cr_BCD = tf.concat([B_cr_prime,C_cr_prime,D_cr_prime], axis=-1)
+                    concat_cb_BCD = tf.concat([B_cb_prime,C_cb_prime,D_cb_prime], axis=-1)
 
-                    concat_y_BCD = np.concatenate([B_y_prime,C_y_prime,D_y_prime], axis=-1)
-                    concat_cr_BCD = np.concatenate([B_cr_prime,C_cr_prime,D_cr_prime], axis=-1)
-                    concat_cb_BCD = np.concatenate([B_cb_prime,C_cb_prime,D_cb_prime], axis=-1)
-
-                    concat_dwt_hr = np.concatenate([concat_y_BCD, concat_cr_BCD, concat_cb_BCD], axis=-1)
+                    concat_dwt_hr = tf.concat([concat_y_BCD, concat_cr_BCD, concat_cb_BCD], axis=-1)
                     # print('__DEBBUG__A shape: ',A_prime.shape)
                     # print(concat_BCD)
 
@@ -222,7 +222,7 @@ def main():
                     _, err = sess.run([sr_opt,sr_loss],\
                          feed_dict={srresnet_training: True,\
                                     lr_dwt_edge: concat_sobel,\
-                                    hr_dwt_edge: concat_dwt_hr,\
+                                    hr_dwt_edge: concat_dwt_hr.eval(),\
 
                                     })
 
