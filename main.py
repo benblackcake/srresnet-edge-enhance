@@ -135,21 +135,21 @@ def main():
                     # Each 10000 times evaluate model
                     if iteration % args.log_freq == 0:
                         # Loop over eval dataset
-                        for batch_idx in range(0, len(val_data_set) - args.batch_size + 1, args.batch_size): 
-                        # Test every log-freq iterations
-                            val_error = evaluate_model(sr_loss, val_data_set[batch_idx:batch_idx + 16], sess, 119, args.batch_size)
-                            eval_error = evaluate_model(sr_loss, eval_data_set[batch_idx:batch_idx + 16], sess, 119, args.batch_size)
-                        val_error_li.append(val_error)
-                        eval_error_li.append(eval_error)
+                        # for batch_idx in range(0, len(val_data_set) - args.batch_size + 1, args.batch_size): 
+                        # # Test every log-freq iterations
+                        #     val_error = evaluate_model(sr_loss, val_data_set[batch_idx:batch_idx + 16], sess, 119, args.batch_size)
+                        #     eval_error = evaluate_model(sr_loss, eval_data_set[batch_idx:batch_idx + 16], sess, 119, args.batch_size)
+                        # val_error_li.append(val_error)
+                        # eval_error_li.append(eval_error)
 
-                        # Log error
-                        plt.plot(val_error_li)
-                        plt.savefig('val_error.png')
-                        plt.plot(eval_error_li)
-                        plt.savefig('eval_error.png')
-                        # fig.savefig()
+                        # # Log error
+                        # plt.plot(val_error_li)
+                        # plt.savefig('val_error.png')
+                        # plt.plot(eval_error_li)
+                        # plt.savefig('eval_error.png')
+                        # # fig.savefig()
 
-                        print('[%d] Test: %.7f, Train: %.7f' % (iteration, val_error, eval_error), end='')
+                        # print('[%d] Test: %.7f, Train: %.7f' % (iteration, val_error, eval_error), end='')
                         # Evaluate benchmarks
                         log_line = ''
                         for benchmark in benchmarks:
