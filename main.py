@@ -7,8 +7,12 @@ import sys
 from tqdm import tqdm,trange
 import matplotlib.pyplot as plt
 import srresnet
-from utils import downsample_batch,build_log_dir,preprocess,evaluate_model,get_data_set, sobel_oper_batch, cany_oper_batch
+from utils import (downsample_batch,build_log_dir,preprocess,evaluate_model,batch_bgr2ycbcr,
+                   get_data_set, sobel_oper_batch, cany_oper_batch, sobel_direct_oper_batch,
+                   tf_dwt)
 import numpy as np
+import pywt
+import cv2
 
 def main():
     parser = argparse.ArgumentParser()
@@ -44,13 +48,12 @@ def main():
                               learning_rate=args.learning_rate,\
                               content_loss=args.content_loss)
 
-    hr_y = tf.placeholder(tf.float32, [None, None, None, 3], name='HR_image')
-    hr_edge = tf.placeholder(tf.float32, [None, None, None, 1], name='HR_edge')
-    lr_edge = tf.placeholder(tf.float32, [None, None, None, 1], name='LR_edge')
-    lr_x = tf.placeholder(tf.float32, [None, None, None, 3], name='LR_image')
+    lr_dwt_edge = tf.placeholder(tf.float32, [None, None, None, 9], name='LR_DWT_edge')
+    hr_dwt_edge = tf.placeholder(tf.float32, [None, None, None, 9], name='HR_DWT_edge')
 
-    sr_pred,sr_edge_pred = srresnet_model.forward(lr_x, lr_edge)
-    sr_loss = srresnet_model.loss_function(hr_y, sr_pred, hr_edge, sr_edge_pred)
+
+    sr_pred = srresnet_model.forward(lr_dwt_edge)
+    sr_loss = srresnet_model.loss_function(hr_dwt_edge, sr_pred)
     sr_opt = srresnet_model.optimize(sr_loss)
 
     benchmarks = [
@@ -129,9 +132,9 @@ def main():
                 for batch_idx in t:
                     t.set_description("Training... [Iterations: %s]" % iteration)
                     
-                    #Each 10000 times evaluate model
+                    # Each 10000 times evaluate model
                     if iteration % args.log_freq == 0:
-                        #Loop over eval dataset
+                        # Loop over eval dataset
                         for batch_idx in range(0, len(val_data_set) - args.batch_size + 1, args.batch_size): 
                         # Test every log-freq iterations
                             val_error = evaluate_model(sr_loss, val_data_set[batch_idx:batch_idx + 16], sess, 119, args.batch_size)
@@ -151,32 +154,76 @@ def main():
                         log_line = ''
                         for benchmark in benchmarks:
                             psnr, ssim, _, _ = benchmark.evaluate(sess, sr_pred, log_path, iteration)
+                            # benchmark.evaluate(sess, sr_pred, log_path, iteration)
                             print(' [%s] PSNR: %.2f, SSIM: %.4f' % (benchmark.name, psnr, ssim), end='')
-                            log_line += ',%.7f, %.7f' % (psnr, ssim)
-                        print()
-                        # Write to log
+                        #     log_line += ',%.7f, %.7f' % (psnr, ssim)
+                        # print()
+                        # # Write to log
                         with open(log_path + '/loss.csv', 'a') as f:
                             f.write('%d, %.15f, %.15f%s\n' % (iteration, val_error, eval_error, log_line))
                         # Save checkpoint
                         saver.save(sess, os.path.join(log_path, 'weights'), global_step=iteration, write_meta_graph=False)
                     
-                    # Train Srresnet   
+                    # Train SRResnet   
                     batch_hr = train_data_set[batch_idx:batch_idx + 16]
-                    batch_hr_edge = cany_oper_batch(batch_hr)
-                    batch_hr_edge = np.expand_dims(batch_hr_edge,axis=-1)/255. #normalize
+                    ycbcr_batch = batch_bgr2ycbcr(batch_hr)
 
-                    batch_lr = downsample_batch(batch_hr, factor=4)
-                    batch_lr_edge = cany_oper_batch(batch_lr)
-                    batch_lr_edge = np.expand_dims(batch_lr_edge,axis=-1)/255. #normalize
+                    batch_hr_y = np.expand_dims(ycbcr_batch[:,:,:,0], axis=-1) #Get batch Y channel image
+                    batch_hr_cr = np.expand_dims(ycbcr_batch[:,:,:,1], axis=-1) #Get batch cr channel image
+                    batch_hr_cb = np.expand_dims(ycbcr_batch[:,:,:,2], axis=-1) #Get batch cb channel image
 
-                    batch_lr, batch_hr = preprocess(batch_lr, batch_hr)
+                    # for i in range(batch_hr.shape[0]):
+                    #     cv2.imshow('__DEBUG__',batch_hr[i,:,:,:])
+                    #     cv2.waitKey(0)
+
+                    dwt_y_channel = tf_dwt(np.float32(batch_hr_y/255.), in_size=[16,96,96,1])
+                    dwt_cr_channel = tf_dwt(np.float32(batch_hr_cr/255.), in_size=[16,96,96,1])
+                    dwt_cb_channel = tf_dwt(np.float32(batch_hr_cb/255.), in_size=[16,96,96,1])
+                    
+                    A_y_prime = sess.run(tf.expand_dims(dwt_y_channel[:,:,:,0], axis=-1))*255.
+                    B_y_prime = sess.run(tf.expand_dims(dwt_y_channel[:,:,:,1], axis=-1))
+                    C_y_prime = sess.run(tf.expand_dims(dwt_y_channel[:,:,:,2], axis=-1))
+                    D_y_prime = sess.run(tf.expand_dims(dwt_y_channel[:,:,:,3], axis=-1))
+
+                    A_cr_prime = sess.run(tf.expand_dims(dwt_cr_channel[:,:,:,0], axis=-1))*255.
+                    B_cr_prime = sess.run(tf.expand_dims(dwt_cr_channel[:,:,:,1], axis=-1))
+                    C_cr_prime = sess.run(tf.expand_dims(dwt_cr_channel[:,:,:,2], axis=-1))
+                    D_cr_prime = sess.run(tf.expand_dims(dwt_cr_channel[:,:,:,3], axis=-1))
+
+                    A_cb_prime = sess.run(tf.expand_dims(dwt_cb_channel[:,:,:,0], axis=-1))*255.
+                    B_cb_prime = sess.run(tf.expand_dims(dwt_cb_channel[:,:,:,1], axis=-1))
+                    C_cb_prime = sess.run(tf.expand_dims(dwt_cb_channel[:,:,:,2], axis=-1))
+                    D_cb_prime = sess.run(tf.expand_dims(dwt_cb_channel[:,:,:,3], axis=-1))
+                    # A = tf.cast(tf.clip_by_value(tf.abs(A),0,255), dtype=tf.uint8)
+                    A_y_prime = np.clip(np.abs(A_y_prime),0,255).astype(np.uint8)
+                    A_cr_prime = np.clip(np.abs(A_cr_prime),0,255).astype(np.uint8)
+                    A_cb_prime = np.clip(np.abs(A_cb_prime),0,255).astype(np.uint8)
+
+
+                    concat_y_BCD = np.concatenate([B_y_prime,C_y_prime,D_y_prime], axis=-1)
+                    concat_cr_BCD = np.concatenate([B_cr_prime,C_cr_prime,D_cr_prime], axis=-1)
+                    concat_cb_BCD = np.concatenate([B_cb_prime,C_cb_prime,D_cb_prime], axis=-1)
+
+                    concat_dwt_hr = np.concatenate([concat_y_BCD, concat_cr_BCD, concat_cb_BCD], axis=-1)
+                    # print('__DEBBUG__A shape: ',A_prime.shape)
+                    # print(concat_BCD)
+
+
+                    sobeled_batch_y_lr = sobel_direct_oper_batch(A_y_prime)/255.
+                    sobeled_batch_cr_lr = sobel_direct_oper_batch(A_cr_prime)/255.
+                    sobeled_batch_cb_lr = sobel_direct_oper_batch(A_cb_prime)/255.
+
+                    concat_sobel = np.concatenate([sobeled_batch_y_lr, sobeled_batch_cr_lr, sobeled_batch_cb_lr], axis=-1)
+
+                    print(concat_dwt_hr.shape)
+                    print(concat_sobel.shape)
+
 
                     _, err = sess.run([sr_opt,sr_loss],\
                          feed_dict={srresnet_training: True,\
-                                    lr_x: batch_lr,\
-                                    hr_y: batch_hr,\
-                                    lr_edge: batch_lr_edge,\
-                                    hr_edge: batch_hr_edge
+                                    lr_dwt_edge: concat_sobel,\
+                                    hr_dwt_edge: concat_dwt_hr,\
+
                                     })
 
                     #print('__training__ %s' % iteration)
