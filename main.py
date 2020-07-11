@@ -133,7 +133,7 @@ def main():
                     t.set_description("Training... [Iterations: %s]" % iteration)
                     
                     # Each 10000 times evaluate model
-                    # if iteration % args.log_freq == 0:
+                    if iteration % args.log_freq == 0:
                         # Loop over eval dataset
                         # for batch_idx in range(0, len(val_data_set) - args.batch_size + 1, args.batch_size): 
                         # # Test every log-freq iterations
@@ -152,17 +152,17 @@ def main():
                         # print('[%d] Test: %.7f, Train: %.7f' % (iteration, val_error, eval_error), end='')
                         # Evaluate benchmarks
                         # log_line = ''
-                        # for benchmark in benchmarks:
-                        #     psnr, ssim, _, _ = benchmark.evaluate(sess, sr_pred, log_path, iteration)
+                        for benchmark in benchmarks:
+                            psnr, ssim, _, _ = benchmark.evaluate(sess, sr_pred, log_path, iteration)
                         #     # benchmark.evaluate(sess, sr_pred, log_path, iteration)
-                        #     print(' [%s] PSNR: %.2f, SSIM: %.4f' % (benchmark.name, psnr, ssim), end='')
+                            print(' [%s] PSNR: %.2f, SSIM: %.4f' % (benchmark.name, psnr, ssim), end='')
                         #     log_line += ',%.7f, %.7f' % (psnr, ssim)
                         # print()
                         # # Write to log
-                        # with open(log_path + '/loss.csv', 'a') as f:
-                        #     f.write('%d, %.15f, %.15f%s\n' % (iteration, val_error, eval_error, log_line))
+                        with open(log_path + '/loss.csv', 'a') as f:
+                            f.write('%d, %.15f, %.15f%s\n' % (iteration, log_line))
                         # Save checkpoint
-                        # saver.save(sess, os.path.join(log_path, 'weights'), global_step=iteration, write_meta_graph=False)
+                        saver.save(sess, os.path.join(log_path, 'weights'), global_step=iteration, write_meta_graph=False)
                     
                     # Train SRResnet   
                     batch_hr = train_data_set[batch_idx:batch_idx + 16]
