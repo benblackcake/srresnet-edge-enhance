@@ -229,7 +229,7 @@ def batch_bgr2rgb(batch):
         batch[i,:,:,:] = cv2.cvtColor(batch[i,:,:,:], cv2.COLOR_BGR2RGB)
 
     return batch
-    
+
 def modcrop(img, scale =2):
     """
     To scale down and up the original image, first thing to do is to have no remainder while scaling operation.
@@ -248,7 +248,8 @@ def modcrop(img, scale =2):
         img = img[0:h, 0:w]
     return img
 
-def tf_dwt(yl,  in_size, wave='haar'):
+# C is channel # just suit for J=1
+def tf_dwt(yl,  wave='haar'):
     w = pywt.Wavelet(wave)
     ll = np.outer(w.dec_lo, w.dec_lo)
     lh = np.outer(w.dec_hi, w.dec_lo)
@@ -261,29 +262,37 @@ def tf_dwt(yl,  in_size, wave='haar'):
     d_temp[::-1, ::-1, 0, 3] = hh
 
     filts = d_temp.astype('float32')
-    filts = np.copy(filts)
+
+    filts = filts[None, :, :, :, :]
+
     filter = tf.convert_to_tensor(filts)
     sz = 2 * (len(w.dec_lo) // 2 - 1)
 
     with tf.variable_scope('DWT'):
 
-        # Pad odd length images
-        if in_size[0] % 2 == 1 and tf.shape(yl)[1] % 2 == 1:
-            yl = tf.pad(yl, tf.constant([[0, 0], [sz, sz + 1], [sz, sz + 1], [0, 0]]), mode='reflect')
-        elif in_size[0] % 2 == 1:
-            yl = tf.pad(yl, tf.constant([[0, 0], [sz, sz + 1], [sz, sz], [0, 0]]), mode='reflect')
-        elif in_size[1] % 2 == 1:
-            yl = tf.pad(yl, tf.constant([[0, 0], [sz, sz], [sz, sz + 1], [0, 0]]), mode='reflect')
-        else:
-            yl = tf.pad(yl, tf.constant([[0, 0], [sz, sz], [sz, sz], [0, 0]]), mode='reflect')
+        ### Pad odd length images
+        # if in_size[0] % 2 == 1 and tf.shape(yl)[1] % 2 == 1:
+        #     yl = tf.pad(yl, tf.constant([[0, 0], [sz, sz + 1], [sz, sz + 1], [0, 0]]), mode='reflect')
+        # elif in_size[0] % 2 == 1:
+        #     yl = tf.pad(yl, tf.constant([[0, 0], [sz, sz + 1], [sz, sz], [0, 0]]), mode='reflect')
+        # elif in_size[1] % 2 == 1:
+        #     yl = tf.pad(yl, tf.constant([[0, 0], [sz, sz], [sz, sz + 1], [0, 0]]), mode='reflect')
+        # else:
+        yl = tf.pad(yl, tf.constant([[0, 0], [sz, sz], [sz, sz], [0, 0]]), mode='reflect')
 
-        # group convolution
-        outputs = tf.nn.conv2d(yl[:, :, :, 0:1], filter, padding='VALID', strides=[1, 2, 2, 1])
-        for channel in range(1, int(yl.shape.dims[3])):
-            temp = tf.nn.conv2d(yl[:, :, :, channel:channel+1], filter, padding='VALID', strides=[1, 2, 2, 1])
-            outputs = tf.concat([outputs, temp], axis=3)
+        y = tf.expand_dims(yl, 1)
+        inputs = tf.split(y, [1]*int(y.shape.dims[4]), 4)
+        inputs = tf.concat([x for x in inputs], 1)
+
+        outputs_3d = tf.nn.conv3d(inputs, filter, padding='VALID', strides=[1, 1, 2, 2, 1])
+        outputs = tf.split(outputs_3d, [1] * int(outputs_3d.shape.dims[1]), 1)
+        outputs = tf.concat([x for x in outputs], 4)
+
+        outputs = tf.reshape(outputs, (tf.shape(outputs)[0], tf.shape(outputs)[2],
+                                       tf.shape(outputs)[3], tf.shape(outputs)[4]))
 
     return outputs
+
 
 
 def tf_idwt(y,  wave='haar'):
