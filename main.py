@@ -7,7 +7,7 @@ import sys
 from tqdm import tqdm,trange
 import matplotlib.pyplot as plt
 import srresnet
-from utils import (downsample_batch,build_log_dir,preprocess,evaluate_model,batch_bgr2ycbcr,batch_bgr2rgb,
+from utils import (downsample_batch,build_log_dir,preprocess,evaluate_model,batch_bgr2ycbcr,batch_bgr2rgb,batch_dwt,
                    get_data_set, sobel_oper_batch, cany_oper_batch, sobel_direct_oper_batch, tf_dwt)
 import numpy as np
 import pywt
@@ -178,8 +178,9 @@ def main():
 
                     # dwt_y_channel = tf_dwt(np.float32(batch_hr_y/255.), in_size=[16,96,96,1])
 
-                    dwt_rgb = sess.run(tf_dwt(np.float32(batch_hr/255.)))
-
+                    # dwt_rgb = sess.run(tf_dwt(np.float32(batch_hr/255.)))
+                    dwt_rgb = batch_dwt(batch_hr)
+                    dwt_rgb = np.clip(np.abs(dwt_rgb), 0, 255).astype('uint8')
                     dwt_r_BCD = dwt_rgb[:,:,:,1:4]
                     dwt_g_BCD = dwt_rgb[:,:,:,5:8]
                     dwt_b_BCD = dwt_rgb[:,:,:,9:12]
