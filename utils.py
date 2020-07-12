@@ -144,58 +144,28 @@ def evaluate_model(loss_function, get_batch, sess, num_images, batch_size):
     loss = 0
     total = 0
     for i in range(int(math.ceil(num_images / batch_size))):
-        batch_hr = get_batch
-        # batch_hr = np.expand_dims(batch_hr[:,:,:,0], axis=-1) #Get batch Y channel image 
-        ycbcr_batch = batch_bgr2ycbcr(batch_hr)
 
-        batch_hr_y = np.expand_dims(ycbcr_batch[:,:,:,0], axis=-1) #Get batch Y channel image
-        batch_hr_cr = np.expand_dims(ycbcr_batch[:,:,:,1], axis=-1) #Get batch cr channel image
-        batch_hr_cb = np.expand_dims(ycbcr_batch[:,:,:,2], axis=-1) #Get batch cb channel image
+        batch_hr = batch_bgr2rgb(get_batch)
+        dwt_rgb = batch_dwt(batch_hr)
+        dwt_rgb = np.clip(np.abs(dwt_rgb), 0, 255).astype('uint8')
+        dwt_r_BCD = dwt_rgb[:,:,:,1:4]
+        dwt_g_BCD = dwt_rgb[:,:,:,5:8]
+        dwt_b_BCD = dwt_rgb[:,:,:,9:12]
 
-        dwt_y_channel = tf_dwt(np.float32(batch_hr_y/255.), in_size=[16,96,96,1])
-        dwt_cr_channel = tf_dwt(np.float32(batch_hr_cr/255.), in_size=[16,96,96,1])
-        dwt_cb_channel = tf_dwt(np.float32(batch_hr_cb/255.), in_size=[16,96,96,1])
-        
-        A_y_prime = sess.run(tf.expand_dims(dwt_y_channel[:,:,:,0], axis=-1))*255.
-        B_y_prime = sess.run(tf.expand_dims(dwt_y_channel[:,:,:,1], axis=-1))
-        C_y_prime = sess.run(tf.expand_dims(dwt_y_channel[:,:,:,2], axis=-1))
-        D_y_prime = sess.run(tf.expand_dims(dwt_y_channel[:,:,:,3], axis=-1))
+        dwt_label = np.concatenate([dwt_r_BCD, dwt_g_BCD, dwt_b_BCD], axis=-1)/255.
 
-        A_cr_prime = sess.run(tf.expand_dims(dwt_cr_channel[:,:,:,0], axis=-1))*255.
-        B_cr_prime = sess.run(tf.expand_dims(dwt_cr_channel[:,:,:,1], axis=-1))
-        C_cr_prime = sess.run(tf.expand_dims(dwt_cr_channel[:,:,:,2], axis=-1))
-        D_cr_prime = sess.run(tf.expand_dims(dwt_cr_channel[:,:,:,3], axis=-1))
+        sobeled_batch_r = sobel_direct_oper_batch(np.expand_dims(dwt_rgb[:,:,:,0], axis=-1))
+        sobeled_batch_g = sobel_direct_oper_batch(np.expand_dims(dwt_rgb[:,:,:,4], axis=-1))
+        sobeled_batch_b = sobel_direct_oper_batch(np.expand_dims(dwt_rgb[:,:,:,8], axis=-1))
 
-        A_cb_prime = sess.run(tf.expand_dims(dwt_cb_channel[:,:,:,0], axis=-1))*255.
-        B_cb_prime = sess.run(tf.expand_dims(dwt_cb_channel[:,:,:,1], axis=-1))
-        C_cb_prime = sess.run(tf.expand_dims(dwt_cb_channel[:,:,:,2], axis=-1))
-        D_cb_prime = sess.run(tf.expand_dims(dwt_cb_channel[:,:,:,3], axis=-1))
-        # A = tf.cast(tf.clip_by_value(tf.abs(A),0,255), dtype=tf.uint8)
-        A_y_prime = np.clip(np.abs(A_y_prime),0,255).astype(np.uint8)
-        A_cr_prime = np.clip(np.abs(A_cr_prime),0,255).astype(np.uint8)
-        A_cb_prime = np.clip(np.abs(A_cb_prime),0,255).astype(np.uint8)
+        sobeled_train = np.concatenate([sobeled_batch_r,sobeled_batch_g,sobeled_batch_b],axis=-1)/255. # Normalized
 
-
-        concat_y_BCD = np.concatenate([B_y_prime,C_y_prime,D_y_prime], axis=-1)
-        concat_cr_BCD = np.concatenate([B_cr_prime,C_cr_prime,D_cr_prime], axis=-1)
-        concat_cb_BCD = np.concatenate([B_cb_prime,C_cb_prime,D_cb_prime], axis=-1)
-
-        concat_dwt_hr = np.concatenate([concat_y_BCD, concat_cr_BCD, concat_cb_BCD], axis=-1)
-        # print('__DEBBUG__A shape: ',A_prime.shape)
-        # print(concat_BCD)
-
-
-        sobeled_batch_y_lr = sobel_direct_oper_batch(A_y_prime)/255.
-        sobeled_batch_cr_lr = sobel_direct_oper_batch(A_cr_prime)/255.
-        sobeled_batch_cb_lr = sobel_direct_oper_batch(A_cb_prime)/255.
-
-        concat_sobel = np.concatenate([sobeled_batch_y_lr, sobeled_batch_cr_lr, sobeled_batch_cb_lr], axis=-1)
 
 
         loss += sess.run(loss_function,
                          feed_dict={'srresnet_training:0': False,\
-                                    'LR_DWT_edge:0': concat_sobel,\
-                                    'HR_DWT_edge:0': concat_dwt_hr,\
+                                    'LR_DWT_edge:0': sobeled_train,\
+                                    'HR_DWT_edge:0': dwt_label,\
                                     })
         total += 1
     loss = loss / total
@@ -267,6 +237,27 @@ def batch_dwt(batch):
         dwt_batch[i,:,:,:] = coeffs
         # print(coeffs.shape)
     return dwt_batch
+
+def batch_Idwt(batch):
+    '''
+    Args:
+        batch: Tensor of batch [16,h,w,12]
+    Returns:
+        Idwt_batch: Tensor of Inverse wavelet transform [16,h*2,w*2,3]
+    '''
+
+    dwt_batch = np.zeros([batch.shape[0], batch.shape[1]*2, batch.shape[2]*2, 3])
+
+    for i in range(batch.shape[0]):
+        Idwt_R = pywt.idwt2((batch[i,:,:,0],(batch[i,:,:,1],batch[i,:,:,2],batch[i,:,:,3])), wavelet='haar')
+        Idwt_G = pywt.idwt2((batch[i,:,:,4],(batch[i,:,:,5],batch[i,:,:,6],batch[i,:,:,7])), wavelet='haar')
+        Idwt_B = pywt.idwt2((batch[i,:,:,8],(batch[i,:,:,9],batch[i,:,:,10],batch[i,:,:,11])), wavelet='haar')
+
+        coeffs = cv2.merge([Idwt_R, Idwt_G, Idwt_B])
+        dwt_batch[i,:,:,:] = coeffs
+        # print(coeffs.shape)
+    return dwt_batch
+
 
 # C is channel # just suit for J=1
 def tf_dwt(yl,  wave='haar'):

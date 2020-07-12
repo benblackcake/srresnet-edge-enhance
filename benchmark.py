@@ -6,7 +6,7 @@ from skimage.measure import compare_ssim
 from skimage.color import rgb2ycbcr, rgb2yuv
 
 from skimage.measure import compare_psnr
-from utils import preprocess, downsample, sobel_oper, modcrop, cany_oper, sobel_direct_oper, tf_dwt, tf_idwt
+from utils import preprocess, downsample, sobel_oper, modcrop, cany_oper, sobel_direct_oper, tf_dwt, tf_idwt, batch_Idwt
 import tensorflow as tf
 import pywt
 import cv2
@@ -127,68 +127,32 @@ class Benchmark:
         pred = []
         for i, lr in enumerate(self.images_lr):
             # feed images 1 by 1 because they have different sizes
-            lr_ycrcb = cv2.cvtColor(lr, cv2.COLOR_BGR2YCrCb)
+            lr_rgb = cv2.cvtColor(lr, cv2.COLOR_BGR2RGB)
 
-            lr_y_sobeled = sobel_direct_oper(lr_ycrcb[:,:,0])/255. # Y channel
-            lr_cr_sobeled = sobel_direct_oper(lr_ycrcb[:,:,1])/255.# cr channel
-            lr_cb_sobeled = sobel_direct_oper(lr_ycrcb[:,:,2])/255.# cb channel
+            lr_R_sobeled = sobel_direct_oper(lr_rgb[:,:,0]) # R channel
+            lr_G_sobeled = sobel_direct_oper(lr_rgb[:,:,1]) # G channel
+            lr_B_sobeled = sobel_direct_oper(lr_rgb[:,:,2]) # B channel
 
-            lr_sobel_concat = np.concatenate([lr_y_sobeled,lr_cr_sobeled,lr_cb_sobeled], axis=-1) # [:,:,9]
+            lr_sobeled_train = np.concatenate([lr_R_sobeled,lr_G_sobeled,lr_B_sobeled], axis=-1)/255. # [:,:,9]
 
             output = sess.run(y_pred, feed_dict={'srresnet_training:0': False,\
-                                                'LR_DWT_edge:0': lr_sobel_concat[np.newaxis],\
+                                                'LR_DWT_edge:0': lr_sobeled_train[np.newaxis],\
                                                 # 'LR_edge:0': lr_edge[np.newaxis]
                                                 })
             # print('__DEBUG__ Benchmark evaluate', output.shape)
             output = np.squeeze(output, axis=0)
 
-            lr_y_channel = np.expand_dims(lr_ycrcb[:,:,0], axis=-1) #original Y channel [:,:] -> [:,:,1]
-
-            # print(lr_y_channel.shape)
-
-            # print(output.shape)
-            # print(output[:,:,0:3].shape)
-            # print(output[:,:,3:6].shape)
-            # print(output[:,:,6:9].shape)
-
-            concat_idwt_y = np.concatenate([np.float32(lr_y_channel/255.), output[:,:,0:3]], axis=-1)
-            concat_idwt_cr = np.concatenate([np.float32(lr_y_channel/255.), output[:,:,3:6]], axis=-1)
-            concat_idwt_cb = np.concatenate([np.float32(lr_y_channel/255.), output[:,:,6:9]], axis=-1)
-             # concat_idwt = concat_idwt[np.newaxis]
-
-            # print(concat_idwt_y.shape)
-            # print(concat_idwt_cr.shape)
-            # print(concat_idwt_cb.shape)
-
-            LL_y = concat_idwt_y[:,:,0]
-            HL_y = concat_idwt_y[:,:,1]
-            LH_y = concat_idwt_y[:,:,2]
-            HH_y = concat_idwt_y[:,:,3]
-
-            LL_cr = concat_idwt_cr[:,:,0]
-            HL_cr = concat_idwt_cr[:,:,1]
-            LH_cr = concat_idwt_cr[:,:,2]
-            HH_cr = concat_idwt_cr[:,:,3]
-
-            LL_cb = concat_idwt_cb[:,:,0]
-            HL_cb = concat_idwt_cb[:,:,1]
-            LH_cb = concat_idwt_cb[:,:,2]
-            HH_cb = concat_idwt_cb[:,:,3]
-            # tf_idwt_output = tf_idwt(outputs_in)
-            idwt_output_y = pywt.idwt2((LL_y,(HL_y,LH_y,HH_y)),'haar')
-            idwt_output_cr = pywt.idwt2((LL_cr,(HL_cr,LH_cr,HH_cr)),'haar')
-            idwt_output_cb = pywt.idwt2((LL_cb,(HL_cb,LH_cb,HH_cb)),'haar')
-
-            idwt_output_y = np.abs(idwt_output_y*255).astype(np.uint8)
-            idwt_output_cr = np.abs(idwt_output_cr*255).astype(np.uint8)
-            idwt_output_cb = np.abs(idwt_output_cb*255).astype(np.uint8)
+            Idwt_R = pywt.idwt2((lr_rgb[:,:,0],(output[:,:,0],output[:,:,1],output[:,:,2])), wavelet='haar')
+            Idwt_G = pywt.idwt2((lr_rgb[:,:,1],(output[:,:,3],output[:,:,4],output[:,:,5])), wavelet='haar')
+            Idwt_B = pywt.idwt2((lr_rgb[:,:,2],(output[:,:,6],output[:,:,7],output[:,:,8])), wavelet='haar')
 
             # print(idwt_output_y.shape)
             # print(idwt_output_cr.shape)
             # print(idwt_output_cb.shape)
 
-            result = cv2.merge([idwt_output_y, idwt_output_cr, idwt_output_cb])
-            result = cv2.cvtColor(result, cv2.COLOR_YCrCb2BGR)
+            result = np.abs(cv2.merge([Idwt_R, Idwt_G, Idwt_B])).astype(np.uint8)
+            # print(result.shape)
+            result = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
             # print(result.shape)
             # cv2.imshow('__DEBUG__', cv2.cvtColor(result, cv2.COLOR_YCrCb2BGR))
             # cv2.waitKey(0)
