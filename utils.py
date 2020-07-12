@@ -248,6 +248,26 @@ def modcrop(img, scale =2):
         img = img[0:h, 0:w]
     return img
 
+
+def batch_dwt(batch):
+    dwt_batch = np.zeros([batch.shape[0], batch.shape[1]//2, batch.shape[2]//2, 12])
+
+    for i in range(batch.shape[0]):
+        LL_r, (LH_r, HL_r, HH_r) = pywt.dwt2(batch[i,:,:,0], 'haar')
+        coeffs_R = np.stack([LL_r,LH_r, HL_r, HH_r],axis=-1)
+
+        LL_g, (LH_g, HL_g, HH_g) = pywt.dwt2(batch[i,:,:,1], 'haar')
+        coeffs_G = np.stack([LL_g,LH_g, HL_g, HH_g],axis=-1)
+
+        LL_b, (LH_b, HL_b, HH_b) = pywt.dwt2(batch[i,:,:,2], 'haar')
+        coeffs_B = np.stack([LL_b,LH_b, HL_b, HH_b],axis=-1)
+
+        coeffs = np.concatenate([coeffs_R, coeffs_G, coeffs_B], axis=-1)
+
+        dwt_batch[i,:,:,:] = coeffs
+        # print(coeffs.shape)
+    return dwt_batch
+
 # C is channel # just suit for J=1
 def tf_dwt(yl,  wave='haar'):
     w = pywt.Wavelet(wave)
