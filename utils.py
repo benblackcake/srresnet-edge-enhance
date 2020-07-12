@@ -147,7 +147,7 @@ def evaluate_model(loss_function, get_batch, sess, num_images, batch_size):
         batch_hr = get_batch
         # batch_hr = np.expand_dims(batch_hr[:,:,:,0], axis=-1) #Get batch Y channel image 
         ycbcr_batch = batch_bgr2ycbcr(batch_hr)
-        
+
         batch_hr_y = np.expand_dims(ycbcr_batch[:,:,:,0], axis=-1) #Get batch Y channel image
         batch_hr_cr = np.expand_dims(ycbcr_batch[:,:,:,1], axis=-1) #Get batch cr channel image
         batch_hr_cb = np.expand_dims(ycbcr_batch[:,:,:,2], axis=-1) #Get batch cb channel image
@@ -223,6 +223,13 @@ def batch_bgr2ycbcr(batch):
 
     return batch
 
+def batch_bgr2rgb(batch):
+
+    for i in range(batch.shape[0]):
+        batch[i,:,:,:] = cv2.cvtColor(batch[i,:,:,:], cv2.COLOR_BGR2RGB)
+
+    return batch
+    
 def modcrop(img, scale =2):
     """
     To scale down and up the original image, first thing to do is to have no remainder while scaling operation.
