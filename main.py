@@ -178,7 +178,7 @@ def main():
 
                     # dwt_y_channel = tf_dwt(np.float32(batch_hr_y/255.), in_size=[16,96,96,1])
 
-                    dwt_rgb = tf_dwt(np.float32(batch_hr/255.), in_size=[96,96]).eval()
+                    dwt_rgb = sess.run(tf_dwt(np.float32(batch_hr/255.), in_size=[96,96]))
 
                     dwt_r_BCD = dwt_rgb[:,:,:,1:4]
                     dwt_g_BCD = dwt_rgb[:,:,:,5:8]
