@@ -13,6 +13,8 @@ from utils import (downsample_batch,build_log_dir,preprocess,evaluate_model,batc
 import numpy as np
 import pywt
 import cv2
+import time
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -133,7 +135,7 @@ def main():
                     t.set_description("Training... [Iterations: %s]" % iteration)
                     
                     # Each 10000 times evaluate model
-                    if iteration % args.log_freq == 0:
+                    # if iteration % args.log_freq == 0:
                         # Loop over eval dataset
                         # for batch_idx in range(0, len(val_data_set) - args.batch_size + 1, args.batch_size): 
                         # # Test every log-freq iterations
@@ -151,22 +153,28 @@ def main():
 
                         # print('[%d] Test: %.7f, Train: %.7f' % (iteration, val_error, eval_error), end='')
                         # Evaluate benchmarks
-                        log_line = ''
-                        for benchmark in benchmarks:
-                            psnr, ssim, _, _ = benchmark.evaluate(sess, sr_pred, log_path, iteration)
-                        #     # benchmark.evaluate(sess, sr_pred, log_path, iteration)
-                            print(' [%s] PSNR: %.2f, SSIM: %.4f' % (benchmark.name, psnr, ssim), end='')
-                            log_line += ',%.7f, %.7f' % (psnr, ssim)
-                        # print()
-                        # # Write to log
-                        with open(log_path + '/loss.csv', 'a') as f:
-                            f.write('%d, %s\n' % (iteration, log_line))
-                        # Save checkpoint
-                        saver.save(sess, os.path.join(log_path, 'weights'), global_step=iteration, write_meta_graph=False)
+                        # log_line = ''
+                        # for benchmark in benchmarks:
+                        #     psnr, ssim, _, _ = benchmark.evaluate(sess, sr_pred, log_path, iteration)
+                        # #     # benchmark.evaluate(sess, sr_pred, log_path, iteration)
+                        #     print(' [%s] PSNR: %.2f, SSIM: %.4f' % (benchmark.name, psnr, ssim), end='')
+                        #     log_line += ',%.7f, %.7f' % (psnr, ssim)
+                        # # print()
+                        # # # Write to log
+                        # with open(log_path + '/loss.csv', 'a') as f:
+                        #     f.write('%d, %s\n' % (iteration, log_line))
+                        # # Save checkpoint
+                        # saver.save(sess, os.path.join(log_path, 'weights'), global_step=iteration, write_meta_graph=False)
                     
                     # Train SRResnet   
                     batch_hr = train_data_set[batch_idx:batch_idx + 16]
+                    time_total = time.time()
+
+                    time_start = time.time()
+
                     ycbcr_batch = batch_bgr2ycbcr(batch_hr)
+                    time_end = time.time()
+                    print('ycbcr_batch cost', time_end - time_start)
 
                     batch_hr_y = np.expand_dims(ycbcr_batch[:,:,:,0], axis=-1) #Get batch Y channel image
                     batch_hr_cr = np.expand_dims(ycbcr_batch[:,:,:,1], axis=-1) #Get batch cr channel image
@@ -175,12 +183,19 @@ def main():
                     # for i in range(batch_hr.shape[0]):
                     #     cv2.imshow('__DEBUG__',batch_hr[i,:,:,:])
                     #     cv2.waitKey(0)
-
+                    time_start = time.time()
                     dwt_y_channel = tf_dwt(np.float32(batch_hr_y/255.), in_size=[16,96,96,1])
+                    time_end = time.time()
+                    print('tf_dwt cost', time_end - time_start)
+
                     dwt_cr_channel = tf_dwt(np.float32(batch_hr_cr/255.), in_size=[16,96,96,1])
                     dwt_cb_channel = tf_dwt(np.float32(batch_hr_cb/255.), in_size=[16,96,96,1])
                     
+                    time_start = time.time()
                     A_y_prime = tf.expand_dims(dwt_y_channel[:,:,:,0], axis=-1).eval()*255.
+                    time_end = time.time()
+                    print('A_y_prime cost', time_end - time_start)
+
                     B_y_prime = tf.expand_dims(dwt_y_channel[:,:,:,1], axis=-1)
                     C_y_prime = tf.expand_dims(dwt_y_channel[:,:,:,2], axis=-1)
                     D_y_prime = tf.expand_dims(dwt_y_channel[:,:,:,3], axis=-1)
@@ -204,12 +219,21 @@ def main():
                     concat_cr_BCD = tf.concat([B_cr_prime,C_cr_prime,D_cr_prime], axis=-1)
                     concat_cb_BCD = tf.concat([B_cb_prime,C_cb_prime,D_cb_prime], axis=-1)
 
-                    concat_dwt_hr = tf.concat([concat_y_BCD, concat_cr_BCD, concat_cb_BCD], axis=-1)
+                    time_start = time.time()
+                    concat_dwt_hr = tf.concat([concat_y_BCD, concat_cr_BCD, concat_cb_BCD], axis=-1).eval()
+                    time_end = time.time()
+                    print('concat_dwt_hr cost', time_end - time_start)
+
                     # print('__DEBBUG__A shape: ',A_prime.shape)
                     # print(concat_BCD)
 
-
+                    time_start = time.time()
                     sobeled_batch_y_lr = sobel_direct_oper_batch(A_y_prime)/255.
+                    time_end = time.time()
+                    print('sobeled_batch_y_lr cost', time_end - time_start)
+
+                    
+
                     sobeled_batch_cr_lr = sobel_direct_oper_batch(A_cr_prime)/255.
                     sobeled_batch_cb_lr = sobel_direct_oper_batch(A_cb_prime)/255.
 
@@ -218,11 +242,14 @@ def main():
                     # print(concat_dwt_hr.shape)
                     # print(concat_sobel.shape)
 
+                    time_total_end = time.time()
+                    print('time_total cost', time_total_end - time_total)
+
 
                     _, err = sess.run([sr_opt,sr_loss],\
                          feed_dict={srresnet_training: True,\
                                     lr_dwt_edge: concat_sobel,\
-                                    hr_dwt_edge: concat_dwt_hr.eval(),\
+                                    hr_dwt_edge: concat_dwt_hr,\
 
                                     })
 
