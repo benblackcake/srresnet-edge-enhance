@@ -181,7 +181,7 @@ def get_data_set(path,label):
 def batch_bgr2ycbcr(batch):
 
     for i in range(batch.shape[0]):
-        batch[i,:,:,:] = cv2.cvtColor(batch[i,:,:,:], cv2.COLOR_BGR2YCrCb)
+        batch[i,:,:,:] = cv2.cvtColor(batch[i,:,:,:], cv2.COLOR_BGR2YCR_CB)
 
 
     return batch

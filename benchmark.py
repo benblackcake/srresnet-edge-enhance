@@ -126,8 +126,11 @@ class Benchmark:
         pred = []
         for i, lr in enumerate(self.images_lr):
             # feed images 1 by 1 because they have different sizes
-            # lr_rgb = cv2.cvtColor(lr, cv2.COLOR_BGR2RGB)
+            lr_rgb = cv2.cvtColor(lr, cv2.COLOR_BGR2RGB)
             lr_rgb = lr
+            # lr_rgb = cv2.cvtColor(lr,cv2.COLOR_BGR2YCR_CB)
+            # img = cv2.cvtColor(img,cv2.COLOR_BGR2YCrCb)
+
             # b = lr_rgb.copy()
             # # set green and red channels to 0
             # b[:, :, 1] = 0
@@ -149,8 +152,8 @@ class Benchmark:
                                                 # 'LR_edge:0': lr_edge[np.newaxis]
                                                 })
             # print('__DEBUG__ Benchmark evaluate', output.shape)
-            output = np.squeeze(output, axis=0)
-            output =np.clip(np.abs(output*255.),0,255).astype(np.uint8)
+            output = np.squeeze(output, axis=0)*255.
+            # output =np.clip*255(np.abs(output*255.),0,255).astype(np.uint8)
 
             Idwt_R = pywt.idwt2((lr_rgb[:,:,0],(output[:,:,0],output[:,:,1],output[:,:,2])), wavelet='haar')
             Idwt_G = pywt.idwt2((lr_rgb[:,:,1],(output[:,:,3],output[:,:,4],output[:,:,5])), wavelet='haar')
@@ -162,7 +165,7 @@ class Benchmark:
 
             result = np.abs(cv2.merge([Idwt_R, Idwt_G, Idwt_B])).astype(np.uint8) 
             # print(result.shape)
-            # result = cv2.cvtColor(result, cv2.COLOR_Ycrcb2BGR)
+            # result = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
             # print(result.shape)
             # cv2.imshow('__DEBUG__', output[:,:,0])
             # cv2.waitKey(0)
@@ -183,8 +186,8 @@ class Benchmark:
             # cv2.imshow('__DEBUG__', output[:,:,5])
             # # cv2.imshow('__DEBUG__', Idwt_R*255)
             # cv2.waitKey(0)
-            cv2.imshow('__DEBUG__',  cv2.cvtColor(result, cv2.COLOR_Ycrcb2BGR))
-            cv2.waitKey(0)
+            # cv2.imshow('__DEBUG__',  result)
+            # cv2.waitKey(0)
 
             '''
             e.g. lr.shape=(128,128,3)

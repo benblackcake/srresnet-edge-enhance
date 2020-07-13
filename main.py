@@ -170,7 +170,7 @@ def main():
 
 
                     # ycbcr_batch = batch_bgr2ycbcr(batch_hr)
-                    batch_hr = batch_bgr2ycbcr(batch_hr)
+                    batch_hr = batch_bgr2rgb(batch_hr)
 
                     # batch_hr_y = np.expand_dims(ycbcr_batch[:,:,:,0], axis=-1) #Get batch Y channel image
                     # batch_hr_cr = np.expand_dims(ycbcr_batch[:,:,:,1], axis=-1) #Get batch cr channel image
@@ -185,7 +185,7 @@ def main():
                     dwt_g_BCD = dwt_rgb[:,:,:,5:8]
                     dwt_b_BCD = dwt_rgb[:,:,:,9:12]
 
-                    dwt_label = np.concatenate([dwt_r_BCD, dwt_g_BCD, dwt_b_BCD], axis=-1)
+                    dwt_label = np.concatenate([dwt_r_BCD, dwt_g_BCD, dwt_b_BCD], axis=-1)/255.
 
                     sobeled_batch_r = sobel_direct_oper_batch(np.expand_dims(dwt_rgb[:,:,:,0], axis=-1))
                     sobeled_batch_g = sobel_direct_oper_batch(np.expand_dims(dwt_rgb[:,:,:,4], axis=-1))
