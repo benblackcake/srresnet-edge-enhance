@@ -36,7 +36,7 @@ class Benchmark:
         """Given a list of file names, return a list of images"""
         out = []
         for image in images:
-            out.append(modcrop(misc.imread(image, mode='RGB')).astype(np.uint8))
+            out.append(modcrop(cv2.cvtColor(cv2.imread(image), cv2.COLOR_BGR2RGB).astype(np.uint8)))
         return out
 
     def deprocess(self, image):
@@ -122,12 +122,12 @@ class Benchmark:
 
     def evaluate(self, sess, y_pred, log_path=None, iteration=0):
         """Evaluate benchmark, returning the score and saving images."""
-        outputs_in = tf.placeholder(tf.float32, [None, None, None, 4], name='outputs')
 
         pred = []
         for i, lr in enumerate(self.images_lr):
             # feed images 1 by 1 because they have different sizes
-            lr_rgb = cv2.cvtColor(lr, cv2.COLOR_BGR2RGB)
+            # lr_rgb = cv2.cvtColor(lr, cv2.COLOR_BGR2RGB)
+            lr_rgb =lr
 
             lr_R_sobeled = sobel_direct_oper(lr_rgb[:,:,0]) # R channel
             lr_G_sobeled = sobel_direct_oper(lr_rgb[:,:,1]) # G channel
@@ -142,20 +142,20 @@ class Benchmark:
             # print('__DEBUG__ Benchmark evaluate', output.shape)
             output = np.squeeze(output, axis=0)
 
-            Idwt_R = pywt.idwt2((lr_rgb[:,:,0],(output[:,:,0],output[:,:,1],output[:,:,2])), wavelet='haar')
-            Idwt_G = pywt.idwt2((lr_rgb[:,:,1],(output[:,:,3],output[:,:,4],output[:,:,5])), wavelet='haar')
-            Idwt_B = pywt.idwt2((lr_rgb[:,:,2],(output[:,:,6],output[:,:,7],output[:,:,8])), wavelet='haar')
+            Idwt_R = pywt.idwt2((lr_rgb[:,:,0]/255.,(output[:,:,0]/255.,output[:,:,1]/255.,output[:,:,2]/255.)), wavelet='haar')
+            Idwt_G = pywt.idwt2((lr_rgb[:,:,1]/255.,(output[:,:,3]/255,output[:,:,4]/255,output[:,:,5]/255)), wavelet='haar')
+            Idwt_B = pywt.idwt2((lr_rgb[:,:,2]/255.,(output[:,:,6]/255,output[:,:,7]/255,output[:,:,8]/255)), wavelet='haar')
 
             # print(idwt_output_y.shape)
             # print(idwt_output_cr.shape)
             # print(idwt_output_cb.shape)
 
-            result = np.abs(cv2.merge([Idwt_R, Idwt_G, Idwt_B])).astype(np.uint8)
+            result = np.abs(cv2.merge([Idwt_R, Idwt_G, Idwt_B])*255).astype(np.uint8) 
             # print(result.shape)
             result = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
             # print(result.shape)
-            # cv2.imshow('__DEBUG__', cv2.cvtColor(result, cv2.COLOR_YCrCb2BGR))
-            # cv2.waitKey(0)
+            cv2.imshow('__DEBUG__', np.abs(output[:,:,0]*255).astype(np.uint8))
+            cv2.waitKey(0)
             '''
             e.g. lr.shape=(128,128,3)
             lr[np.newaxis].shape=(1,128,128,3)
