@@ -127,7 +127,8 @@ class Benchmark:
         pred = []
         for i, lr in enumerate(self.images_lr):
             # feed images 1 by 1 because they have different sizes
-            lr_rgb = cv2.cvtColor(lr, cv2.COLOR_BGR2RGB)
+            # lr_rgb = cv2.cvtColor(lr, cv2.COLOR_BGR2RGB)
+            lr_rgb = lr
 
             lr_R_sobeled = sobel_direct_oper(lr_rgb[:,:,0]) # R channel
             lr_G_sobeled = sobel_direct_oper(lr_rgb[:,:,1]) # G channel
