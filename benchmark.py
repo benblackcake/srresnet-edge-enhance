@@ -143,9 +143,9 @@ class Benchmark:
             lr_G_sobeled = sobel_direct_oper(lr_rgb[:,:,1]) # G channel cr channel
             lr_B_sobeled = sobel_direct_oper(lr_rgb[:,:,2]) # B channel cb channel
 
-            lr_R_sobeled = np.concatenate([lr_R_sobeled,np.expand_dims(lr_rgb[:,:,0], axis=-1)], axis=-1) 
-            lr_G_sobeled = np.concatenate([lr_G_sobeled,np.expand_dims(lr_rgb[:,:,1], axis=-1)], axis=-1) 
-            lr_B_sobeled = np.concatenate([lr_B_sobeled,np.expand_dims(lr_rgb[:,:,2], axis=-1)], axis=-1) 
+            # lr_R_sobeled = np.concatenate([lr_R_sobeled,np.expand_dims(lr_rgb[:,:,0], axis=-1)], axis=-1) 
+            # lr_G_sobeled = np.concatenate([lr_G_sobeled,np.expand_dims(lr_rgb[:,:,1], axis=-1)], axis=-1) 
+            # lr_B_sobeled = np.concatenate([lr_B_sobeled,np.expand_dims(lr_rgb[:,:,2], axis=-1)], axis=-1) 
 
             lr_sobeled_train = np.concatenate([lr_R_sobeled,lr_G_sobeled,lr_B_sobeled], axis=-1)/255. # [:,:,9]
             # cv2.imshow('__DEBUG__', lr_sobeled_train[:,:,0])
