@@ -133,7 +133,7 @@ class Benchmark:
             lr_G_sobeled = sobel_direct_oper(lr_rgb[:,:,1]) # G channel
             lr_B_sobeled = sobel_direct_oper(lr_rgb[:,:,2]) # B channel
 
-            lr_sobeled_train = np.concatenate([lr_R_sobeled,lr_G_sobeled,lr_B_sobeled], axis=-1)/255. # [:,:,9]
+            lr_sobeled_train = np.concatenate([lr_R_sobeled,lr_G_sobeled,lr_B_sobeled], axis=-1) # [:,:,9]
 
             output = sess.run(y_pred, feed_dict={'srresnet_training:0': False,\
                                                 'LR_DWT_edge:0': lr_sobeled_train[np.newaxis],\
@@ -142,20 +142,20 @@ class Benchmark:
             # print('__DEBUG__ Benchmark evaluate', output.shape)
             output = np.squeeze(output, axis=0)
 
-            Idwt_R = pywt.idwt2((lr_rgb[:,:,0]/255.,(output[:,:,0]/255.,output[:,:,1]/255.,output[:,:,2]/255.)), wavelet='haar')
-            Idwt_G = pywt.idwt2((lr_rgb[:,:,1]/255.,(output[:,:,3]/255,output[:,:,4]/255,output[:,:,5]/255)), wavelet='haar')
-            Idwt_B = pywt.idwt2((lr_rgb[:,:,2]/255.,(output[:,:,6]/255,output[:,:,7]/255,output[:,:,8]/255)), wavelet='haar')
+            Idwt_R = pywt.idwt2((lr_rgb[:,:,0],(output[:,:,0],output[:,:,1],output[:,:,2])), wavelet='haar')
+            Idwt_G = pywt.idwt2((lr_rgb[:,:,1],(output[:,:,3],output[:,:,4],output[:,:,5])), wavelet='haar')
+            Idwt_B = pywt.idwt2((lr_rgb[:,:,2],(output[:,:,6],output[:,:,7],output[:,:,8])), wavelet='haar')
 
             # print(idwt_output_y.shape)
             # print(idwt_output_cr.shape)
             # print(idwt_output_cb.shape)
 
-            result = np.abs(cv2.merge([Idwt_R, Idwt_G, Idwt_B])*255).astype(np.uint8) 
+            result = np.abs(cv2.merge([Idwt_R, Idwt_G, Idwt_B])).astype(np.uint8) 
             # print(result.shape)
-            result = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
+            # result = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
             # print(result.shape)
-            cv2.imshow('__DEBUG__', np.abs(output[:,:,0]*255).astype(np.uint8))
-            cv2.waitKey(0)
+            # cv2.imshow('__DEBUG__', np.abs(output[:,:,0]*255).astype(np.uint8))
+            # cv2.waitKey(0)
             '''
             e.g. lr.shape=(128,128,3)
             lr[np.newaxis].shape=(1,128,128,3)

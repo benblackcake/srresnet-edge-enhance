@@ -185,13 +185,13 @@ def main():
                     dwt_g_BCD = dwt_rgb[:,:,:,5:8]
                     dwt_b_BCD = dwt_rgb[:,:,:,9:12]
 
-                    dwt_label = np.concatenate([dwt_r_BCD, dwt_g_BCD, dwt_b_BCD], axis=-1)/255.
+                    dwt_label = np.concatenate([dwt_r_BCD, dwt_g_BCD, dwt_b_BCD], axis=-1)
 
                     sobeled_batch_r = sobel_direct_oper_batch(np.expand_dims(dwt_rgb[:,:,:,0], axis=-1))
                     sobeled_batch_g = sobel_direct_oper_batch(np.expand_dims(dwt_rgb[:,:,:,4], axis=-1))
                     sobeled_batch_b = sobel_direct_oper_batch(np.expand_dims(dwt_rgb[:,:,:,8], axis=-1))
 
-                    sobeled_train = np.concatenate([sobeled_batch_r,sobeled_batch_g,sobeled_batch_b],axis=-1)/255. # Normalized
+                    sobeled_train = np.concatenate([sobeled_batch_r,sobeled_batch_g,sobeled_batch_b],axis=-1) # Normalized
 
                     # dwt_cr_channel = tf_dwt(np.float32(batch_hr_cr/255.), in_size=[16,96,96,1])
                     # dwt_cb_channel = tf_dwt(np.float32(batch_hr_cb/255.), in_size=[16,96,96,1])
