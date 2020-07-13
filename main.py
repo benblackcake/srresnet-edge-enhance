@@ -188,9 +188,9 @@ def main():
                     # dwt_label = np.concatenate([dwt_r_BCD, dwt_g_BCD, dwt_b_BCD], axis=-1)/255.
                     dwt_label = dwt_rgb
 
-                    sobeled_batch_r = sobel_direct_oper_batch(np.expand_dims(dwt_rgb[:,:,:,0]))
-                    sobeled_batch_g = sobel_direct_oper_batch(np.expand_dims(dwt_rgb[:,:,:,4]))
-                    sobeled_batch_b = sobel_direct_oper_batch(np.expand_dims(dwt_rgb[:,:,:,8]))
+                    sobeled_batch_r = sobel_direct_oper_batch(dwt_rgb[:,:,:,0])
+                    sobeled_batch_g = sobel_direct_oper_batch(dwt_rgb[:,:,:,4])
+                    sobeled_batch_b = sobel_direct_oper_batch(dwt_rgb[:,:,:,8])
 
                     # sobeled_batch_r = np.concatenate([sobeled_batch_r,np.expand_dims(dwt_rgb[:,:,:,0], axis=-1)],axis=-1)
                     # sobeled_batch_g = np.concatenate([sobeled_batch_g,np.expand_dims(dwt_rgb[:,:,:,4], axis=-1)],axis=-1)
