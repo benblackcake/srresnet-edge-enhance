@@ -159,9 +159,9 @@ class Benchmark:
             output = np.squeeze(output, axis=0)*255.
             # output =np.clip*255(np.abs(output*255.),0,255).astype(np.uint8)
 
-            Idwt_R = pywt.idwt2((lr_rgb[:,:,0],(output[:,:,0],output[:,:,1],output[:,:,2])), wavelet='haar')
-            Idwt_G = pywt.idwt2((lr_rgb[:,:,1],(output[:,:,3],output[:,:,4],output[:,:,5])), wavelet='haar')
-            Idwt_B = pywt.idwt2((lr_rgb[:,:,2],(output[:,:,6],output[:,:,7],output[:,:,8])), wavelet='haar')
+            Idwt_R = pywt.idwt2((output[:,:,0],(output[:,:,1],output[:,:,2],output[:,:,3])), wavelet='haar')
+            Idwt_G = pywt.idwt2((output[:,:,4],(output[:,:,5],output[:,:,6],output[:,:,7])), wavelet='haar')
+            Idwt_B = pywt.idwt2((output[:,:,8],(output[:,:,9],output[:,:,10],output[:,:,11])), wavelet='haar')
 
             # print(idwt_output_y.shape)
             # print(idwt_output_cr.shape)
