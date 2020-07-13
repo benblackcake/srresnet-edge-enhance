@@ -179,17 +179,10 @@ def get_data_set(path,label):
 
 
 def batch_bgr2ycbcr(batch):
-    # output = np.zeros((batch.shape[0], batch.shape[1] , batch.shape[2], batch.shape[3]))
-    # output[:,:,:,0] = 16+((batch[:,:,:,2]*65.481)/255+(batch[:,:,:,1]*128.553)/255+(batch[:,:,:,0]*24.966)/255)
-    # output[:,:,:,1] = 128-((batch[:,:,:,2]*-39.97)/255-(batch[:,:,:,1]*74.203)/255+(batch[:,:,:,0]*112.0)/255)
-    # output[:,:,:,2] = 128+((batch[:,:,:,2]*112.0)/255-(batch[:,:,:,1]*93.786)/255-(batch[:,:,:,0]*24.966)/255)
 
     for i in range(batch.shape[0]):
         batch[i,:,:,:] = cv2.cvtColor(batch[i,:,:,:], cv2.COLOR_BGR2YCrCb)
-        # output[i,:,:,:] = tmp
-        # print(output[i,:,:,:])
-        # cv2.imshow('testing...', batch[i,:,:,:])
-        # cv2.waitKey(0)
+
 
     return batch
 

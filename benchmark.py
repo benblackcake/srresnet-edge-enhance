@@ -136,11 +136,11 @@ class Benchmark:
             # cv2.imshow('__DEBUG__', b)
             # cv2.waitKey(0)
 
-            lr_R_sobeled = sobel_direct_oper(lr_rgb[:,:,0]) # R channel
-            lr_G_sobeled = sobel_direct_oper(lr_rgb[:,:,1]) # G channel
-            lr_B_sobeled = sobel_direct_oper(lr_rgb[:,:,2]) # B channel
+            lr_R_sobeled = sobel_direct_oper(lr_rgb[:,:,0]) # R channel Y channel
+            lr_G_sobeled = sobel_direct_oper(lr_rgb[:,:,1]) # G channel cr channel
+            lr_B_sobeled = sobel_direct_oper(lr_rgb[:,:,2]) # B channel cb channel
 
-            lr_sobeled_train = np.concatenate([lr_R_sobeled,lr_G_sobeled,lr_B_sobeled], axis=-1) # [:,:,9]
+            lr_sobeled_train = np.concatenate([lr_R_sobeled,lr_G_sobeled,lr_B_sobeled], axis=-1)/255. # [:,:,9]
             # cv2.imshow('__DEBUG__', lr_sobeled_train[:,:,0])
             # cv2.waitKey(0)
 
@@ -150,7 +150,7 @@ class Benchmark:
                                                 })
             # print('__DEBUG__ Benchmark evaluate', output.shape)
             output = np.squeeze(output, axis=0)
-            output =np.clip( np.abs(output*255.),0,255).astype(np.uint8)
+            output =np.clip(np.abs(output*255.),0,255).astype(np.uint8)
 
             Idwt_R = pywt.idwt2((lr_rgb[:,:,0],(output[:,:,0],output[:,:,1],output[:,:,2])), wavelet='haar')
             Idwt_G = pywt.idwt2((lr_rgb[:,:,1],(output[:,:,3],output[:,:,4],output[:,:,5])), wavelet='haar')
@@ -162,7 +162,7 @@ class Benchmark:
 
             result = np.abs(cv2.merge([Idwt_R, Idwt_G, Idwt_B])).astype(np.uint8) 
             # print(result.shape)
-            # result = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
+            # result = cv2.cvtColor(result, cv2.COLOR_Ycrcb2BGR)
             # print(result.shape)
             # cv2.imshow('__DEBUG__', output[:,:,0])
             # cv2.waitKey(0)
@@ -183,8 +183,8 @@ class Benchmark:
             # cv2.imshow('__DEBUG__', output[:,:,5])
             # # cv2.imshow('__DEBUG__', Idwt_R*255)
             # cv2.waitKey(0)
-            # cv2.imshow('__DEBUG__',  cv2.cvtColor(result, cv2.COLOR_RGB2BGR))
-            # cv2.waitKey(0)
+            cv2.imshow('__DEBUG__',  cv2.cvtColor(result, cv2.COLOR_Ycrcb2BGR))
+            cv2.waitKey(0)
 
             '''
             e.g. lr.shape=(128,128,3)

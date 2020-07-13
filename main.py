@@ -170,7 +170,7 @@ def main():
 
 
                     # ycbcr_batch = batch_bgr2ycbcr(batch_hr)
-                    batch_hr = batch_bgr2rgb(batch_hr)
+                    batch_hr = batch_bgr2ycbcr(batch_hr)
 
                     # batch_hr_y = np.expand_dims(ycbcr_batch[:,:,:,0], axis=-1) #Get batch Y channel image
                     # batch_hr_cr = np.expand_dims(ycbcr_batch[:,:,:,1], axis=-1) #Get batch cr channel image
@@ -191,7 +191,7 @@ def main():
                     sobeled_batch_g = sobel_direct_oper_batch(np.expand_dims(dwt_rgb[:,:,:,4], axis=-1))
                     sobeled_batch_b = sobel_direct_oper_batch(np.expand_dims(dwt_rgb[:,:,:,8], axis=-1))
 
-                    sobeled_train = np.concatenate([sobeled_batch_r,sobeled_batch_g,sobeled_batch_b],axis=-1) # Normalized
+                    sobeled_train = np.concatenate([sobeled_batch_r,sobeled_batch_g,sobeled_batch_b],axis=-1)/255. # Normalized
 
                     # dwt_cr_channel = tf_dwt(np.float32(batch_hr_cr/255.), in_size=[16,96,96,1])
                     # dwt_cb_channel = tf_dwt(np.float32(batch_hr_cb/255.), in_size=[16,96,96,1])
