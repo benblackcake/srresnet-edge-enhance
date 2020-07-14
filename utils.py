@@ -63,15 +63,18 @@ def sobel_direct_oper(image):
     diagonal_edge = cv2.filter2D(image, cv2.CV_32F, diagonal_k, None, (-1,-1), 0, cv2.BORDER_DEFAULT)
     diagonal_edge = cv2.convertScaleAbs(diagonal_edge)
 
-    # img = np.expand_dims(img,axis=-1)
+    # img = np.expand_dims(image,axis=-1)
     # x_edge = np.expand_dims(x_edge,axis=-1)
     # y_edge = np.expand_dims(y_edge,axis=-1)
     # diagonal_edge = np.expand_dims(diagonal_edge,axis=-1)
 
-    result = np.stack([image,x_edge,y_edge,diagonal_edge], axis=-1) #[:,:,3]
+    # cv2.imshow('testing',img)
+    # cv2.waitKey(0)
+    result = np.stack([x_edge,y_edge,diagonal_edge], axis=-1) #[:,:,3]
 
     # print(result.shape)
-
+    # cv2.imshow('testing',result[:,:,0])
+    # cv2.waitKey(0)
     return result
 
 def sobel_oper_batch(batch):
@@ -83,10 +86,9 @@ def sobel_oper_batch(batch):
     return sobeled
 
 def sobel_direct_oper_batch(batch):
-    sobeled = np.zeros((batch.shape[0], batch.shape[1] , batch.shape[2],4))
+    sobeled = np.zeros((batch.shape[0], batch.shape[1] , batch.shape[2],3))
     for i in range(batch.shape[0]):
         sobeled[i,:,:,:] = sobel_direct_oper(batch[i,:,:])
-
     return sobeled
 
 def cany_oper_batch(batch):
@@ -148,12 +150,12 @@ def evaluate_model(loss_function, get_batch, sess, num_images, batch_size):
         batch_hr = batch_bgr2rgb(get_batch)
         dwt_rgb = batch_dwt(batch_hr)
         dwt_rgb = np.clip(np.abs(dwt_rgb), 0, 255).astype('uint8')
-        # dwt_r_BCD = dwt_rgb[:,:,:,1:4]
-        # dwt_g_BCD = dwt_rgb[:,:,:,5:8]
-        # dwt_b_BCD = dwt_rgb[:,:,:,9:12]
+        dwt_r_BCD = dwt_rgb[:,:,:,1:4]
+        dwt_g_BCD = dwt_rgb[:,:,:,5:8]
+        dwt_b_BCD = dwt_rgb[:,:,:,9:12]
 
-        # dwt_label = np.concatenate([dwt_r_BCD, dwt_g_BCD, dwt_b_BCD], axis=-1)/255.
-        dwt_label = dwt_rgb
+        dwt_label = np.concatenate([dwt_r_BCD, dwt_g_BCD, dwt_b_BCD], axis=-1)/255.
+        # dwt_label = dwt_rgb
 
         sobeled_batch_r = sobel_direct_oper_batch(dwt_rgb[:,:,:,0])
         sobeled_batch_g = sobel_direct_oper_batch(dwt_rgb[:,:,:,4])
