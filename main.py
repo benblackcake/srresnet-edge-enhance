@@ -171,7 +171,10 @@ def main():
 
                     # ycbcr_batch = batch_bgr2ycbcr(batch_hr)
                     batch_hr = batch_bgr2rgb(batch_hr)
+                    batch_lr = downsample_batch(batch_hr, factor=2)
 
+                    batch_hr = batch_dwt(batch_hr)
+                    batch_lr = batch_dwt(batch_hr)
                     # batch_hr_y = np.expand_dims(ycbcr_batch[:,:,:,0], axis=-1) #Get batch Y channel image
                     # batch_hr_cr = np.expand_dims(ycbcr_batch[:,:,:,1], axis=-1) #Get batch cr channel image
                     # batch_hr_cb = np.expand_dims(ycbcr_batch[:,:,:,2], axis=-1) #Get batch cb channel image
@@ -179,24 +182,24 @@ def main():
                     # dwt_y_channel = tf_dwt(np.float32(batch_hr_y/255.), in_size=[16,96,96,1])
 
                     # dwt_rgb = sess.run(tf_dwt(np.float32(batch_hr/255.)))
-                    dwt_rgb = batch_dwt(batch_hr)
-                    dwt_rgb = np.clip(np.abs(dwt_rgb), 0, 255).astype('uint8')
+                    # dwt_rgb = batch_dwt(batch_hr)
+                    # dwt_rgb = np.clip(np.abs(dwt_rgb), 0, 255).astype('uint8')
                     # dwt_r_BCD = dwt_rgb[:,:,:,0:4]
                     # dwt_g_BCD = dwt_rgb[:,:,:,4:8]
                     # dwt_b_BCD = dwt_rgb[:,:,:,8:12]
 
                     # dwt_label = np.concatenate([dwt_r_BCD, dwt_g_BCD, dwt_b_BCD], axis=-1)/255.
-                    dwt_label = dwt_rgb
+                    # dwt_label = dwt_rgb
 
-                    sobeled_batch_r = sobel_direct_oper_batch(dwt_rgb[:,:,:,0])
-                    sobeled_batch_g = sobel_direct_oper_batch(dwt_rgb[:,:,:,4])
-                    sobeled_batch_b = sobel_direct_oper_batch(dwt_rgb[:,:,:,8])
+                    # sobeled_batch_r = sobel_direct_oper_batch(dwt_rgb[:,:,:,0])
+                    # sobeled_batch_g = sobel_direct_oper_batch(dwt_rgb[:,:,:,4])
+                    # sobeled_batch_b = sobel_direct_oper_batch(dwt_rgb[:,:,:,8])
 
                     # sobeled_batch_r = np.concatenate([sobeled_batch_r,np.expand_dims(dwt_rgb[:,:,:,0], axis=-1)],axis=-1)
                     # sobeled_batch_g = np.concatenate([sobeled_batch_g,np.expand_dims(dwt_rgb[:,:,:,4], axis=-1)],axis=-1)
                     # sobeled_batch_b = np.concatenate([sobeled_batch_b,np.expand_dims(dwt_rgb[:,:,:,8], axis=-1)],axis=-1)
 
-                    sobeled_train = np.concatenate([sobeled_batch_r,sobeled_batch_g,sobeled_batch_b],axis=-1)/255. # Normalized
+                    # sobeled_train = np.concatenate([sobeled_batch_r,sobeled_batch_g,sobeled_batch_b],axis=-1)/255. # Normalized
 
                     # dwt_cr_channel = tf_dwt(np.float32(batch_hr_cr/255.), in_size=[16,96,96,1])
                     # dwt_cb_channel = tf_dwt(np.float32(batch_hr_cb/255.), in_size=[16,96,96,1])
@@ -235,8 +238,8 @@ def main():
 
                     _, err = sess.run([sr_opt,sr_loss],\
                          feed_dict={srresnet_training: True,\
-                                    lr_dwt_edge: sobeled_train,\
-                                    hr_dwt_edge: dwt_label,\
+                                    lr_dwt_edge: batch_lr,\
+                                    hr_dwt_edge: batch_hr,\
 
                                     })
 

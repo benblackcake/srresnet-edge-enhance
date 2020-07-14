@@ -5,7 +5,7 @@ import tensorflow as tf
 class Srresnet:
     """Srresnet Model"""
 
-    def __init__(self, training, content_loss='mse', learning_rate=1e-4, num_blocks=16, num_upsamples=2):
+    def __init__(self, training, content_loss='mse', learning_rate=1e-4, num_blocks=16, num_upsamples=1):
         self.learning_rate = learning_rate
         self.num_blocks = num_blocks
         self.num_upsamples = num_upsamples
@@ -115,7 +115,7 @@ class Srresnet:
         '''
         with tf.variable_scope('srresnet_edge',reuse=tf.AUTO_REUSE) as scope:
             # x = tf.concat([x, x_edge],axis=3, name='x_input_concate')
-
+            input_x = x
             weights = {
                 'w_in': tf.Variable(tf.random_normal([9, 9, 12, 64], stddev=1e-3), name='w_in'),
                 'w1': tf.Variable(tf.random_normal([3, 3, 64, 64], stddev=1e-3), name='w1'),
@@ -135,11 +135,12 @@ class Srresnet:
             x = tf.layers.batch_normalization(x, training=self.training)
             x = x + skip
 
-            # for i in range(self.num_upsamples):
-            #     x = self.Upsample2xBlock(x, kernel_size=3, filter_size=256)
+            for i in range(self.num_upsamples):
+                x = self.Upsample2xBlock(x, kernel_size=3, filter_size=256)
 
             x_conv_out = tf.nn.conv2d(x, weights['w_out'], strides=[1,1,1,1], padding='SAME', name='y_predict')
 
+            # x_conv_out = x_conv_out + input_x
             return x_conv_out
 
     def _content_loss(self, y, y_pred):

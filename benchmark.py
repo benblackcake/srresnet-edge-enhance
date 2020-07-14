@@ -6,7 +6,7 @@ from skimage.measure import compare_ssim
 from skimage.color import rgb2ycbcr, rgb2yuv
 
 from skimage.measure import compare_psnr
-from utils import preprocess, downsample, sobel_oper, modcrop, cany_oper, sobel_direct_oper, batch_Idwt
+from utils import preprocess, downsample, sobel_oper, modcrop, cany_oper, sobel_direct_oper, batch_Idwt, batch_dwt
 import tensorflow as tf
 import pywt
 import cv2
@@ -128,6 +128,7 @@ class Benchmark:
             # feed images 1 by 1 because they have different sizes
             lr_rgb = cv2.cvtColor(lr, cv2.COLOR_BGR2RGB)
             lr_rgb = lr
+            lr_rgb = batch_dwt(lr_rgb)
             # lr_rgb = cv2.cvtColor(lr,cv2.COLOR_BGR2YCR_CB)
             # img = cv2.cvtColor(img,cv2.COLOR_BGR2YCrCb)
 
@@ -139,35 +140,36 @@ class Benchmark:
             # cv2.imshow('__DEBUG__', b)
             # cv2.waitKey(0)
 
-            lr_R_sobeled = sobel_direct_oper(lr_rgb[:,:,0]) # R channel Y channel
-            lr_G_sobeled = sobel_direct_oper(lr_rgb[:,:,1]) # G channel cr channel
-            lr_B_sobeled = sobel_direct_oper(lr_rgb[:,:,2]) # B channel cb channel
+            # lr_R_sobeled = sobel_direct_oper(lr_rgb[:,:,0]) # R channel Y channel
+            # lr_G_sobeled = sobel_direct_oper(lr_rgb[:,:,1]) # G channel cr channel
+            # lr_B_sobeled = sobel_direct_oper(lr_rgb[:,:,2]) # B channel cb channel
 
             # lr_R_sobeled = np.concatenate([lr_R_sobeled,np.expand_dims(lr_rgb[:,:,0], axis=-1)], axis=-1) 
             # lr_G_sobeled = np.concatenate([lr_G_sobeled,np.expand_dims(lr_rgb[:,:,1], axis=-1)], axis=-1) 
             # lr_B_sobeled = np.concatenate([lr_B_sobeled,np.expand_dims(lr_rgb[:,:,2], axis=-1)], axis=-1) 
 
-            lr_sobeled_train = np.concatenate([lr_R_sobeled,lr_G_sobeled,lr_B_sobeled], axis=-1)/255. # [:,:,9]
+            # lr_sobeled_train = np.concatenate([lr_R_sobeled,lr_G_sobeled,lr_B_sobeled], axis=-1)/255. # [:,:,9]
             # cv2.imshow('__DEBUG__', lr_sobeled_train[:,:,0])
             # cv2.waitKey(0)
 
             output = sess.run(y_pred, feed_dict={'srresnet_training:0': False,\
-                                                'LR_DWT_edge:0': lr_sobeled_train[np.newaxis],\
+                                                'LR_DWT_edge:0': lr_rgb[np.newaxis],\
                                                 # 'LR_edge:0': lr_edge[np.newaxis]
                                                 })
             # print('__DEBUG__ Benchmark evaluate', output.shape)
-            output = np.squeeze(output, axis=0)*255.
+            output = np.squeeze(output, axis=0)
+            result = batch_Idwt(output)
             # output =np.clip*255(np.abs(output*255.),0,255).astype(np.uint8)
 
-            Idwt_R = pywt.idwt2((output[:,:,0],(output[:,:,1],output[:,:,2],output[:,:,3])), wavelet='haar')
-            Idwt_G = pywt.idwt2((output[:,:,4],(output[:,:,5],output[:,:,6],output[:,:,7])), wavelet='haar')
-            Idwt_B = pywt.idwt2((output[:,:,8],(output[:,:,9],output[:,:,10],output[:,:,11])), wavelet='haar')
+            # Idwt_R = pywt.idwt2((output[:,:,0],(output[:,:,1],output[:,:,2],output[:,:,3])), wavelet='haar')
+            # Idwt_G = pywt.idwt2((output[:,:,4],(output[:,:,5],output[:,:,6],output[:,:,7])), wavelet='haar')
+            # Idwt_B = pywt.idwt2((output[:,:,8],(output[:,:,9],output[:,:,10],output[:,:,11])), wavelet='haar')
 
             # print(idwt_output_y.shape)
             # print(idwt_output_cr.shape)
             # print(idwt_output_cb.shape)
 
-            result = np.abs(cv2.merge([Idwt_R, Idwt_G, Idwt_B])).astype(np.uint8) 
+            # result = np.abs(cv2.merge([Idwt_R, Idwt_G, Idwt_B])).astype(np.uint8) 
             # print(result.shape)
             # result = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
             # print(result.shape)
