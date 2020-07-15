@@ -6,7 +6,11 @@ from skimage.measure import compare_ssim
 from skimage.color import rgb2ycbcr, rgb2yuv
 
 from skimage.measure import compare_psnr
+<<<<<<< HEAD
 from utils import preprocess, downsample, sobel_oper, modcrop, cany_oper, sobel_direct_oper, batch_Idwt, batch_dwt, up_sample
+=======
+from utils import preprocess, downsample, sobel_oper, modcrop, cany_oper, sobel_direct_oper, batch_Idwt, batch_dwt,dwt_shape
+>>>>>>> 509a66ca8183ffcfa16d4023177044179f5ce85c
 import tensorflow as tf
 import pywt
 import cv2
@@ -22,7 +26,7 @@ class Benchmark:
         self.images_lr = []
         for img in self.images_hr:
             # print(img.shape)
-            self.images_lr.append(downsample(img, 2))
+            self.images_lr.append(downsample(img, 4))
 
     def load_images_by_model(self, model, file_format='*'):
         """Loads all images that match '*_{model}.{file_format}' and returns sorted list of filenames and names"""
@@ -36,7 +40,7 @@ class Benchmark:
         """Given a list of file names, return a list of images"""
         out = []
         for image in images:
-            out.append(modcrop(cv2.cvtColor(cv2.imread(image), cv2.COLOR_BGR2RGB).astype(np.uint8)))
+            out.append(dwt_shape(cv2.cvtColor(cv2.imread(image), cv2.COLOR_BGR2RGB).astype(np.uint8)))
         return out
 
     def deprocess(self, image):
@@ -126,12 +130,20 @@ class Benchmark:
         pred = []
         for i, lr in enumerate(self.images_lr):
             # feed images 1 by 1 because they have different sizes
+
             lr_rgb = cv2.cvtColor(lr, cv2.COLOR_BGR2RGB)
             # lr_rgb = up_sample(lr_rgb, factor=2)
             lr_rgb = batch_dwt(lr_rgb)
 
             lr_A = np.stack([lr_rgb[:,:,0], lr_rgb[:,:,4], lr_rgb[:,:,8]],axis=-1)
             lr_BCD = np.concatenate([lr_rgb[:,:,1:4], lr_rgb[:,:,5:8], lr_rgb[:,:,9:12]], axis=-1)
+            # lr_rgb = cv2.cvtColor(lr, cv2.COLOR_BGR2RGB)
+            # print(lr_rgb.shape)
+
+            # lr_rgb = dwt_shape(lr)
+            # print(lr_rgb.shape)
+
+
             # lr_rgb = cv2.cvtColor(lr,cv2.COLOR_BGR2YCR_CB)
             # img = cv2.cvtColor(img,cv2.COLOR_BGR2YCrCb)
 
@@ -155,6 +167,7 @@ class Benchmark:
             # cv2.imshow('__DEBUG__', lr_sobeled_train[:,:,0])
             # cv2.waitKey(0)
 
+
             output_A, output_BCD = sess.run(y_pred, feed_dict={'srresnet_training:0': False,\
                                                 'LR_DWT_A:0': lr_A[np.newaxis],\
                                                 'LR_DWT_edge:0': lr_BCD[np.newaxis],\
@@ -168,7 +181,9 @@ class Benchmark:
 
             output = np.concatenate([rect_R, rect_G, rect_B], axis=-1)
             result = batch_Idwt(output)
-            output = np.squeeze(output, axis=0)
+            result = np.squeeze(result, axis=0)
+            result =np.clip(np.abs(result),0,255).astype(np.uint8)
+
             # output =np.clip*255(np.abs(output*255.),0,255).astype(np.uint8)
 
             # Idwt_R = pywt.idwt2((output[:,:,0],(output[:,:,1],output[:,:,2],output[:,:,3])), wavelet='haar')

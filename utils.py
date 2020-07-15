@@ -161,6 +161,7 @@ def evaluate_model(loss_function, get_batch, sess, num_images, batch_size):
 
         batch_hr = batch_bgr2rgb(get_batch)
         batch_lr = downsample_batch(batch_hr, factor=4)
+
         # batch_lr = up_sample_batch(batch_lr, factor=2)
 
 
@@ -178,6 +179,7 @@ def evaluate_model(loss_function, get_batch, sess, num_images, batch_size):
         # print(batch_lr_A.shape)
         # print(batch_hr_BCD.shape)
         # print(batch_lr_BCD.shape)
+
         # batch_hr = batch_bgr2rgb(get_batch)
         # dwt_rgb = batch_dwt(batch_hr)
         # dwt_rgb = np.clip(np.abs(dwt_rgb), 0, 255).astype('uint8')
@@ -233,7 +235,7 @@ def batch_bgr2rgb(batch):
 
     return batch
 
-def modcrop(img, scale =2):
+def modcrop(img, scale =4):
     """
     To scale down and up the original image, first thing to do is to have no remainder while scaling operation.
     """
@@ -291,3 +293,29 @@ def batch_Idwt(batch):
         # print(coeffs.shape)
     return dwt_batch
 
+
+def dwt_shape(img):
+    if len(img.shape) ==3:
+        h, w, _ = img.shape
+        print(h)
+        print(w)
+        h = (h//2+(h//2%8))*2
+        w = (w//2+(w//2%8))*2
+
+        print(w)
+        print(w-img.shape[1])
+        # img = np.pad(img ,pad_width=((h-img.shape[0], w-img.shape[1],0)), 'constant', constant_values=0)
+        img = np.pad(array=img, pad_width=(((h-img.shape[0])//2,(h-img.shape[0])//2),((w-img.shape[1])//2, (w-img.shape[1])//2),(0,0)), mode='constant', constant_values=(0,0))
+        # img = img[0:h, 0:w, :]
+        # print('__DEBUG__')
+        # print(h)
+        # print(w)
+        # print(img.shape)
+        # cv2.imshow('t', img)
+        # cv2.waitKey(0)
+    else:
+        h, w = img.shape
+        h = (h//2+(h//2%8))*2
+        w = (w//2+(w//2%8))*2
+        img = img[0:h, 0:w]
+    return img
