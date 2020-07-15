@@ -203,7 +203,7 @@ class Benchmark:
             # print(result.shape)
             # result = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
             # print(result.shape)
-            # cv2.imshow('__DEBUG__', output[:,:,0])
+            # cv2.imshow('__DEBUG__', np.clip(np.abs(np.squeeze(output_BCD[:,:,:,0])),0,255).astype(np.uint8))
             # cv2.waitKey(0)
 
             # cv2.imshow('__DEBUG__', output[:,:,1])
