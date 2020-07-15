@@ -38,6 +38,7 @@ def main():
     parser.add_argument('--gpu', type=str, default='0', help='Which GPU to use')
     parser.add_argument('--epoch', type=int, default='1000000', help='How many iterations ')
     parser.add_argument('--is-val', action='store_true', help='How many iterations ')
+    parser.add_argument('--upSample', type=int, default='1', help='How much scale ')
 
 
     args = parser.parse_args()
@@ -47,7 +48,8 @@ def main():
 
     srresnet_model = srresnet.Srresnet(training=srresnet_training,\
                               learning_rate=args.learning_rate,\
-                              content_loss=args.content_loss)
+                              content_loss=args.content_loss,\
+                              num_upsamples=args.upSample)
 
     lr_dwt_edge = tf.placeholder(tf.float32, [None, None, None, 12], name='LR_DWT_edge')
     hr_dwt_edge = tf.placeholder(tf.float32, [None, None, None, 12], name='HR_DWT_edge')
@@ -171,10 +173,10 @@ def main():
 
                     # ycbcr_batch = batch_bgr2ycbcr(batch_hr)
                     batch_hr = batch_bgr2rgb(batch_hr)
-                    batch_lr = downsample_batch(batch_hr, factor=2)
+                    batch_lr = downsample_batch(batch_hr, factor=4)
 
                     batch_hr = batch_dwt(batch_hr)
-                    batch_lr = batch_dwt(batch_hr)
+                    batch_lr = batch_dwt(batch_lr)
                     # batch_hr_y = np.expand_dims(ycbcr_batch[:,:,:,0], axis=-1) #Get batch Y channel image
                     # batch_hr_cr = np.expand_dims(ycbcr_batch[:,:,:,1], axis=-1) #Get batch cr channel image
                     # batch_hr_cb = np.expand_dims(ycbcr_batch[:,:,:,2], axis=-1) #Get batch cb channel image
