@@ -158,7 +158,7 @@ def main():
                         # Evaluate benchmarks
                         log_line = ''
                         for benchmark in benchmarks:
-                            psnr, ssim, _, _ = benchmark.evaluate(sess, sr_pred, log_path, iteration)
+                            psnr, ssim, _, _ = benchmark.evaluate(sess, sr_A_pred, sr_BCD_pred, log_path, iteration)
                         # #     # benchmark.evaluate(sess, sr_pred, log_path, iteration)
                             print(' [%s] PSNR: %.2f, SSIM: %.4f' % (benchmark.name, psnr, ssim), end='')
                             log_line += ',%.7f, %.7f' % (psnr, ssim)

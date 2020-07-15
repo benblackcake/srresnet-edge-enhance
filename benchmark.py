@@ -121,7 +121,7 @@ class Benchmark:
             if count >= 14:
                 break
 
-    def evaluate(self, sess, y_pred, log_path=None, iteration=0):
+    def evaluate(self, sess, sr_A_pred, sr_BCD_pred, log_path=None, iteration=0):
         """Evaluate benchmark, returning the score and saving images."""
 
         pred = []
@@ -165,7 +165,7 @@ class Benchmark:
             # cv2.waitKey(0)
 
 
-            output_A, output_BCD = sess.run(y_pred, feed_dict={'srresnet_training:0': False,\
+            output_A, output_BCD = sess.run([sr_A_pred, sr_BCD_pred], feed_dict={'srresnet_training:0': False,\
                                                 'LR_DWT_A:0': lr_A[np.newaxis],\
                                                 'LR_DWT_edge:0': lr_BCD[np.newaxis],\
                                                 # 'LR_edge:0': lr_edge[np.newaxis]
