@@ -179,14 +179,14 @@ def main():
 
                     # batch_lr = up_sample_batch(batch_lr, factor=2)
 
-                    batch_hr = batch_dwt(batch_hr)
-                    batch_lr = batch_dwt(batch_lr)
+                    batch_dwt_hr = batch_dwt(batch_hr)
+                    batch_dwt_lr = batch_dwt(batch_lr)
 
-                    batch_hr_A = np.stack([batch_hr[:,:,:,0], batch_hr[:,:,:,4], batch_hr[:,:,:,8]], axis=-1)
-                    batch_lr_A = np.stack([batch_lr[:,:,:,0], batch_lr[:,:,:,4], batch_lr[:,:,:,8]], axis=-1)
+                    # batch_hr_A = np.stack([batch_hr[:,:,:,0], batch_hr[:,:,:,4], batch_hr[:,:,:,8]], axis=-1)
+                    # batch_lr_A = np.stack([batch_lr[:,:,:,0], batch_lr[:,:,:,4], batch_lr[:,:,:,8]], axis=-1)
 
-                    batch_hr_BCD = np.concatenate([batch_hr[:,:,:,1:4], batch_hr[:,:,:,5:8], batch_hr[:,:,:,9:12]], axis=-1)
-                    batch_lr_BCD = np.concatenate([batch_lr[:,:,:,1:4], batch_lr[:,:,:,5:8], batch_lr[:,:,:,9:12]], axis=-1)
+                    batch_hr_BCD = np.concatenate([batch_dwt_hr[:,:,:,1:4], batch_dwt_hr[:,:,:,5:8], batch_dwt_hr[:,:,:,9:12]], axis=-1)
+                    batch_lr_BCD = np.concatenate([batch_dwt_lr[:,:,:,1:4], batch_dwt_lr[:,:,:,5:8], batch_dwt_lr[:,:,:,9:12]], axis=-1)
 
                     # batch_hr_y = np.expand_dims(ycbcr_batch[:,:,:,0], axis=-1) #Get batch Y channel image
                     # batch_hr_cr = np.expand_dims(ycbcr_batch[:,:,:,1], axis=-1) #Get batch cr channel image
@@ -251,9 +251,9 @@ def main():
 
                     _, err = sess.run([sr_opt,sr_loss],\
                          feed_dict={srresnet_training: True,\
-                                    lr_A: batch_lr_A,\
+                                    lr_A: batch_lr,\
                                     lr_dwt_edge: batch_lr_BCD,\
-                                    hr_A: batch_hr_A,\
+                                    hr_A: batch_hr,\
                                     hr_dwt_edge: batch_hr_BCD,\
 
                                     })
