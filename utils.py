@@ -108,6 +108,20 @@ def downsample_batch(batch, factor):
         downsampled[i, :, :, :] = downsample(batch[i, :, :, :], factor)
     return downsampled
 
+
+def up_sample(image, factor):
+    """Downsampling function which matches photoshop"""
+    return scipy.misc.imresize(image, 2.0, interp='bicubic')
+
+
+def up_sample_batch(batch, factor):
+    upsampled = np.zeros((batch.shape[0], batch.shape[1] * 2, batch.shape[2] * 2, 3))
+    for i in range(batch.shape[0]):
+        # print(up_sample(batch[i, :, :, :], factor).shape)
+        upsampled[i, :, :, :] = up_sample(batch[i, :, :, :], factor)
+    print(upsampled.shape)
+    return upsampled
+
 def build_log_dir(args, arguments):
     """Set up a timestamped directory for results and logs for this training session"""
     if args.name:
@@ -144,12 +158,26 @@ def evaluate_model(loss_function, get_batch, sess, num_images, batch_size):
     loss = 0
     total = 0
     for i in range(int(math.ceil(num_images / batch_size))):
-        
+
         batch_hr = batch_bgr2rgb(get_batch)
-        batch_lr = downsample_batch(batch_hr, factor=2)
+        batch_lr = downsample_batch(batch_hr, factor=4)
+        # batch_lr = up_sample_batch(batch_lr, factor=2)
+
 
         batch_hr = batch_dwt(batch_hr)
-        batch_lr = batch_dwt(batch_hr)
+        batch_lr = batch_dwt(batch_lr)
+
+        batch_hr_A = np.stack([batch_hr[:,:,:,0], batch_hr[:,:,:,4], batch_hr[:,:,:,8]],axis=-1)
+        batch_lr_A = np.stack([batch_lr[:,:,:,0], batch_lr[:,:,:,4], batch_lr[:,:,:,8]],axis=-1)
+
+        batch_hr_BCD = np.concatenate([batch_hr[:,:,:,1:4], batch_hr[:,:,:,5:8], batch_hr[:,:,:,9:12]], axis=-1)
+        batch_lr_BCD = np.concatenate([batch_lr[:,:,:,1:4], batch_lr[:,:,:,5:8], batch_lr[:,:,:,9:12]], axis=-1)
+
+        # print('debug shape')
+        # print(batch_hr_A.shape)
+        # print(batch_lr_A.shape)
+        # print(batch_hr_BCD.shape)
+        # print(batch_lr_BCD.shape)
         # batch_hr = batch_bgr2rgb(get_batch)
         # dwt_rgb = batch_dwt(batch_hr)
         # dwt_rgb = np.clip(np.abs(dwt_rgb), 0, 255).astype('uint8')
@@ -174,8 +202,10 @@ def evaluate_model(loss_function, get_batch, sess, num_images, batch_size):
 
         loss += sess.run(loss_function,
                          feed_dict={'srresnet_training:0': False,\
-                                    'LR_DWT_edge:0': batch_lr,\
-                                    'HR_DWT_edge:0': batch_hr,\
+                                    'LR_DWT_A:0': batch_lr_A,\
+                                    'LR_DWT_edge:0': batch_lr_BCD,\
+                                    'HR_DWT_A:0': batch_hr_A,\
+                                    'HR_DWT_edge:0': batch_hr_BCD,\
                                     })
         total += 1
     loss = loss / total

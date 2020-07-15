@@ -5,7 +5,7 @@ import tensorflow as tf
 class Srresnet:
     """Srresnet Model"""
 
-    def __init__(self, training, content_loss='mse', learning_rate=1e-4, num_blocks=16, num_upsamples=1):
+    def __init__(self, training, content_loss='mse', learning_rate=1e-4, num_blocks=16, num_upsamples=2):
         self.learning_rate = learning_rate
         self.num_blocks = num_blocks
         self.num_upsamples = num_upsamples
@@ -48,9 +48,9 @@ class Srresnet:
         x = x + skip
         return x
 
-    def Upsample2xBlock(self, x, kernel_size, filter_size):
+    def Upsample2xBlock(self, x, kernel_size,in_channel, filter_size):
         weights = {
-            'w1': tf.Variable(tf.random_normal([kernel_size, kernel_size,64, filter_size], stddev=1e-3), name='w1_upsample'),
+            'w1': tf.Variable(tf.random_normal([kernel_size, kernel_size,in_channel, filter_size], stddev=1e-3), name='w1_upsample'),
         }
         """Upsample 2x via SubpixelConv"""
         print('init',x)
@@ -106,7 +106,7 @@ class Srresnet:
         return tf.concat(rdb_concat, axis=3) 
 
 
-    def forward(self, x):
+    def forward(self, x_LL, x_BCD):
         '''
         Args:
             x: Input tensor include 3 direction sobel edge [batch_size, img_h, img_w, 3]
@@ -115,58 +115,74 @@ class Srresnet:
         '''
         with tf.variable_scope('srresnet_edge',reuse=tf.AUTO_REUSE) as scope:
             # x = tf.concat([x, x_edge],axis=3, name='x_input_concate')
-            input_x = x
+            input_x = x_LL
             weights = {
-                'w_in': tf.Variable(tf.random_normal([9, 9, 12, 64], stddev=1e-3), name='w_in'),
-                'w1': tf.Variable(tf.random_normal([3, 3, 64, 64], stddev=1e-3), name='w1'),
-                'w_out': tf.Variable(tf.random_normal([9, 9, 64, 12], stddev=1e-3), name='w_out'),
+                'w_resnet_in': tf.Variable(tf.random_normal([9, 9, 3, 64], stddev=1e-3), name='w_resnet_in'),
+                'w_resnet_1': tf.Variable(tf.random_normal([3, 3, 64, 64], stddev=1e-3), name='w_resnet_1'),
+                'w_resnet_out': tf.Variable(tf.random_normal([9, 9, 64, 3], stddev=1e-3), name='w_resnet_out'),
+                'w_RDB_in': tf.Variable(tf.random_normal([9, 9, 9, 64], stddev=1e-3), name='w_resnet_in'),
+                'w_RDB_1': tf.Variable(tf.random_normal([9, 9, 192, 64], stddev=1e-3), name='w_resnet_in'),
+                'w_RDB_out': tf.Variable(tf.random_normal([9, 9, 64, 9], stddev=1e-3), name='w_resnet_in'),
+
             }
 
+            self._weightsR, self._biasesR = self.RDBParams()
+            x_LL = tf.nn.conv2d(x_LL, weights['w_resnet_in'], strides=[1,1,1,1], padding='SAME')
+            x_BCD = tf.nn.conv2d(x_BCD, weights['w_RDB_in'], strides=[1,1,1,1], padding='SAME')
 
-            x = tf.nn.conv2d(x, weights['w_in'], strides=[1,1,1,1], padding='SAME')
-            # x = tf.nn.relu(x)
-            x = tf.contrib.keras.layers.PReLU(shared_axes=[1, 2])(x)
-            skip = x
-
-            for i in range(self.num_blocks):
-                x = self.ResidualBlock(x, 3, 64)
-
-            x = tf.nn.conv2d(x, weights['w1'], strides=[1,1,1,1], padding='SAME', name='layer_1')
-            x = tf.layers.batch_normalization(x, training=self.training)
-            x = x + skip
+            x_BCD = self.RDBs(x_BCD)
+            x_BCD = tf.nn.conv2d(x_BCD, weights['w_RDB_1'], strides=[1,1,1,1], padding='SAME')
 
             for i in range(self.num_upsamples):
-                x = self.Upsample2xBlock(x, kernel_size=3, filter_size=256)
+                x_BCD = self.Upsample2xBlock(x_BCD, kernel_size=3, in_channel=64, filter_size=256)
 
-            x_conv_out = tf.nn.conv2d(x, weights['w_out'], strides=[1,1,1,1], padding='SAME', name='y_predict')
+            x_BCD_out = tf.nn.conv2d(x_BCD, weights['w_RDB_out'], strides=[1,1,1,1], padding='SAME')
+            print('__DEBUG__',x_BCD)
+            # x = tf.nn.relu(x)
+            x_LL = tf.contrib.keras.layers.PReLU(shared_axes=[1, 2])(x_LL)
+            skip = x_LL
+
+            for i in range(self.num_blocks):
+                x_LL = self.ResidualBlock(x_LL, 3, 64)
+
+            x_LL = tf.nn.conv2d(x_LL, weights['w_resnet_1'], strides=[1,1,1,1], padding='SAME', name='layer_1')
+            x_LL = tf.layers.batch_normalization(x_LL, training=self.training)
+            x_LL = x_LL + skip
+
+            for i in range(self.num_upsamples):
+                x_LL = self.Upsample2xBlock(x_LL, kernel_size=3, in_channel=64, filter_size=256)
+
+            x_conv_out = tf.nn.conv2d(x_LL, weights['w_resnet_out'], strides=[1,1,1,1], padding='SAME', name='y_predict')
 
             # x_conv_out = x_conv_out + input_x
-            return x_conv_out
+            print(x_conv_out)
+            print(x_BCD_out)
+            return x_conv_out, x_BCD_out
 
-    def _content_loss(self, y, y_pred):
+    def _content_loss(self, y_A, y_A_pred, y_BCD, y_BCD_pred):
         """MSE, VGG22, or VGG54"""
         if self.content_loss == 'mse':
-            return tf.reduce_mean(tf.square(y - y_pred))
+            return tf.reduce_mean(tf.square(y_A - y_A_pred))
 
         if self.content_loss == 'L1':
-            return tf.reduce_mean(tf.abs(y - y_pred))
+            return tf.reduce_mean(tf.abs(y_A - y_A_pred))
 
-        # if self.content_loss == 'edge_loss_mse':
-        #     lamd = 0.5
-        #     # y_sobeled = tf.image.sobel_edges(y)
-        #     # y_pred_sobeled = tf.image.sobel_edges(y_pred)
-        #     return tf.reduce_mean(tf.square(y - y_pred)) + (lamd*tf.reduce_mean(tf.square(y_edge - y_edge_pred)))
+        if self.content_loss == 'edge_loss_mse':
+            lamd = 0.5
+            # y_sobeled = tf.image.sobel_edges(y)
+            # y_pred_sobeled = tf.image.sobel_edges(y_pred)
+            return tf.reduce_mean(tf.square(y_A - y_A_pred)) + (lamd*tf.reduce_mean(tf.square(y_BCD - y_BCD_pred)))
 
-        # if self.content_loss == 'edge_loss_L1':
-        #     lamd = 0.5
-        #     # y_sobeled = tf.image.sobel_edges(y)
-        #     # y_pred_sobeled = tf.image.sobel_edges(y_pred)
-        #     return tf.reduce_mean(tf.abs(y - y_pred)) + (lamd*tf.reduce_mean(tf.square(y_edge - y_edge_pred)))
+        if self.content_loss == 'edge_loss_L1':
+            lamd = 0.5
+            # y_sobeled = tf.image.sobel_edges(y)
+            # y_pred_sobeled = tf.image.sobel_edges(y_pred)
+            return tf.reduce_mean(tf.abs(y_A - y_A_pred)) + (lamd*tf.reduce_mean(tf.square(y_BCD - y_BCD_pred)))
 
-    def loss_function(self, y, y_pred):
+    def loss_function(self, y_A, y_A_pred, y_BCD, y_BCD_pred):
 
         # Content loss only
-        return self._content_loss(y, y_pred)
+        return self._content_loss(y_A, y_A_pred, y_BCD, y_BCD_pred)
 
     def optimize(self, loss):
         # tf.control_dependencies([discrim_train

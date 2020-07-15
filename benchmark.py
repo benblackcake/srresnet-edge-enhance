@@ -6,7 +6,7 @@ from skimage.measure import compare_ssim
 from skimage.color import rgb2ycbcr, rgb2yuv
 
 from skimage.measure import compare_psnr
-from utils import preprocess, downsample, sobel_oper, modcrop, cany_oper, sobel_direct_oper, batch_Idwt, batch_dwt
+from utils import preprocess, downsample, sobel_oper, modcrop, cany_oper, sobel_direct_oper, batch_Idwt, batch_dwt, up_sample
 import tensorflow as tf
 import pywt
 import cv2
@@ -127,8 +127,11 @@ class Benchmark:
         for i, lr in enumerate(self.images_lr):
             # feed images 1 by 1 because they have different sizes
             lr_rgb = cv2.cvtColor(lr, cv2.COLOR_BGR2RGB)
-            lr_rgb = lr
+            # lr_rgb = up_sample(lr_rgb, factor=2)
             lr_rgb = batch_dwt(lr_rgb)
+
+            lr_A = np.stack([lr_rgb[:,:,0], lr_rgb[:,:,4], lr_rgb[:,:,8]],axis=-1)
+            lr_BCD = np.concatenate([lr_rgb[:,:,1:4], lr_rgb[:,:,5:8], lr_rgb[:,:,9:12]], axis=-1)
             # lr_rgb = cv2.cvtColor(lr,cv2.COLOR_BGR2YCR_CB)
             # img = cv2.cvtColor(img,cv2.COLOR_BGR2YCrCb)
 
@@ -152,13 +155,20 @@ class Benchmark:
             # cv2.imshow('__DEBUG__', lr_sobeled_train[:,:,0])
             # cv2.waitKey(0)
 
-            output = sess.run(y_pred, feed_dict={'srresnet_training:0': False,\
-                                                'LR_DWT_edge:0': lr_rgb[np.newaxis],\
+            output_A, output_BCD = sess.run(y_pred, feed_dict={'srresnet_training:0': False,\
+                                                'LR_DWT_A:0': lr_A[np.newaxis],\
+                                                'LR_DWT_edge:0': lr_BCD[np.newaxis],\
                                                 # 'LR_edge:0': lr_edge[np.newaxis]
                                                 })
             # print('__DEBUG__ Benchmark evaluate', output.shape)
-            output = np.squeeze(output, axis=0)
+
+            rect_R = np.stack([output_A[:,:,:,0], output_BCD[:,:,:,0:3]], axis=-1)
+            rect_G = np.stack([output_A[:,:,:,1], output_BCD[:,:,:,3:6]], axis=-1)
+            rect_B = np.stack([output_A[:,:,:,2], output_BCD[:,:,:,6:9]], axis=-1)
+
+            output = np.concatenate([rect_R, rect_G, rect_B], axis=-1)
             result = batch_Idwt(output)
+            output = np.squeeze(output, axis=0)
             # output =np.clip*255(np.abs(output*255.),0,255).astype(np.uint8)
 
             # Idwt_R = pywt.idwt2((output[:,:,0],(output[:,:,1],output[:,:,2],output[:,:,3])), wavelet='haar')
