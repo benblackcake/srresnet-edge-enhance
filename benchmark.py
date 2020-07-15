@@ -6,11 +6,8 @@ from skimage.measure import compare_ssim
 from skimage.color import rgb2ycbcr, rgb2yuv
 
 from skimage.measure import compare_psnr
-<<<<<<< HEAD
-from utils import preprocess, downsample, sobel_oper, modcrop, cany_oper, sobel_direct_oper, batch_Idwt, batch_dwt, up_sample
-=======
 from utils import preprocess, downsample, sobel_oper, modcrop, cany_oper, sobel_direct_oper, batch_Idwt, batch_dwt,dwt_shape
->>>>>>> 509a66ca8183ffcfa16d4023177044179f5ce85c
+
 import tensorflow as tf
 import pywt
 import cv2

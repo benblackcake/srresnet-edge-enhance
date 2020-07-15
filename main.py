@@ -38,7 +38,7 @@ def main():
     parser.add_argument('--gpu', type=str, default='0', help='Which GPU to use')
     parser.add_argument('--epoch', type=int, default='1000000', help='How many iterations ')
     parser.add_argument('--is-val', action='store_true', help='How many iterations ')
-    parser.add_argument('--upSample', type=int, default='1', help='How much scale ')
+    parser.add_argument('--upSample', type=int, default='2', help='How much scale ')
 
 
     args = parser.parse_args()
