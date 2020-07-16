@@ -126,7 +126,7 @@ class Benchmark:
         pred = []
         for i, lr in enumerate(self.images_lr):
             # feed images 1 by 1 because they have different sizes
-            lr_rgb = cv2.cvtColor(lr, cv2.COLOR_BGR2RGB)
+            # lr_rgb = cv2.cvtColor(lr, cv2.COLOR_BGR2RGB)
             lr_rgb = lr
             # lr_rgb = cv2.cvtColor(lr,cv2.COLOR_BGR2YCR_CB)
             # img = cv2.cvtColor(img,cv2.COLOR_BGR2YCrCb)
@@ -156,13 +156,11 @@ class Benchmark:
                                                 # 'LR_edge:0': lr_edge[np.newaxis]
                                                 })
             # print('__DEBUG__ Benchmark evaluate', output.shape)
-            output = (np.squeeze(output, axis=0)*255.)
+
+            output = np.squeeze(output, axis=0)
             # output =np.clip*255(np.abs(output*255.),0,255).astype(np.uint8)
 
-            # Idwt_R = pywt.idwt2((output[:,:,0],(output[:,:,1],output[:,:,2],output[:,:,3])), wavelet='haar')
-            # Idwt_G = pywt.idwt2((output[:,:,4],(output[:,:,5],output[:,:,6],output[:,:,7])), wavelet='haar')
-            # Idwt_B = pywt.idwt2((output[:,:,8],(output[:,:,9],output[:,:,10],output[:,:,11])), wavelet='haar')            
-            Idwt_R = pywt.idwt2((lr_rgb[:,:,0],(output[:,:,0],output[:,:,1],output[:,:,2])), wavelet='haar')
+            Idwt_R = pywt.idwt2((lr_rgb[:,:,0],(output[:,:,0],output[:,:,1],output[:,:,1])), wavelet='haar')
             Idwt_G = pywt.idwt2((lr_rgb[:,:,1],(output[:,:,3],output[:,:,4],output[:,:,5])), wavelet='haar')
             Idwt_B = pywt.idwt2((lr_rgb[:,:,2],(output[:,:,6],output[:,:,7],output[:,:,8])), wavelet='haar')
 
@@ -170,7 +168,9 @@ class Benchmark:
             # print(idwt_output_cr.shape)
             # print(idwt_output_cb.shape)
 
-            result = np.abs(cv2.merge([Idwt_R, Idwt_G, Idwt_B])).astype(np.uint8) 
+            result = cv2.merge([Idwt_R, Idwt_G, Idwt_B])
+            result*= (255.0/idwt_result.max())
+            result = np.abs(result)
             # print(result.shape)
             # result = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
             # print(result.shape)
