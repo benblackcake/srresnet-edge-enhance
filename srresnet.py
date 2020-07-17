@@ -1,6 +1,6 @@
 
 import tensorflow as tf
-
+from utils import tf_idwt, tf_dwt
 
 class Srresnet:
     """Srresnet Model"""
@@ -160,6 +160,9 @@ class Srresnet:
             return x_conv_out, x_BCD_out
 
     def _content_loss(self, y_A, y_A_pred, y_BCD, y_BCD_pred):
+
+        tf_dwt_debug = tf_dwt(y_A_pred)
+        print('__DEBUG__tf_dwt_debug', tf_dwt_debug)
         """MSE, VGG22, or VGG54"""
         if self.content_loss == 'mse':
             return tf.reduce_mean(tf.square(y_A - y_A_pred))
