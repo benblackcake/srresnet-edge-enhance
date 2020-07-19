@@ -176,15 +176,15 @@ def main():
                     # ycbcr_batch = batch_bgr2ycbcr(batch_hr)
                     batch_hr = batch_bgr2rgb(batch_hr)
                     batch_lr = downsample_batch(batch_hr, factor=4)
-                    batch_lr = up_sample_batch(batch_hr, factor=4)
+                    batch_lr = up_sample_batch(batch_lr, factor=4)
 
                     # batch_lr = up_sample_batch(batch_lr, factor=2)
 
                     batch_dwt_hr = batch_dwt(batch_hr)
                     batch_dwt_lr = batch_dwt(batch_lr)
 
-                    batch_hr_A = np.stack([batch_dwt_hr[:,:,:,0], batch_dwt_hr[:,:,:,4], batch_dwt_hr[:,:,:,8]])
-                    batch_lr_A = np.stack([batch_dwt_lr[:,:,:,0], batch_dwt_lr[:,:,:,4], batch_dwt_lr[:,:,:,8]])
+                    batch_hr_A = np.stack([batch_dwt_hr[:,:,:,0], batch_dwt_hr[:,:,:,4], batch_dwt_hr[:,:,:,8]], axis=-1)
+                    batch_lr_A = np.stack([batch_dwt_lr[:,:,:,0], batch_dwt_lr[:,:,:,4], batch_dwt_lr[:,:,:,8]], axis=-1)
 
                     batch_hr_BCD = np.concatenate([batch_dwt_hr[:,:,:,1:4], batch_dwt_hr[:,:,:,5:8], batch_dwt_hr[:,:,:,9:12]], axis=-1)
                     batch_lr_BCD = np.concatenate([batch_dwt_lr[:,:,:,1:4], batch_dwt_lr[:,:,:,5:8], batch_dwt_lr[:,:,:,9:12]], axis=-1)
@@ -254,7 +254,7 @@ def main():
                          feed_dict={srresnet_training: True,\
                                     lr_A: batch_lr_A,\
                                     lr_dwt_edge: batch_lr_BCD,\
-                                    hr_A: batch_hr_A,\
+                                    hr_A: batch_hr,\
                                     hr_dwt_edge: batch_hr_BCD,\
 
                                     })

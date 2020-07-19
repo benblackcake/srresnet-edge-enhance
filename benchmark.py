@@ -6,7 +6,7 @@ from skimage.measure import compare_ssim
 from skimage.color import rgb2ycbcr, rgb2yuv
 
 from skimage.measure import compare_psnr
-from utils import preprocess, downsample, sobel_oper, modcrop, cany_oper, sobel_direct_oper, batch_Idwt, batch_dwt,dwt_shape
+from utils import preprocess, downsample, sobel_oper, modcrop, cany_oper, sobel_direct_oper, batch_Idwt, batch_dwt,dwt_shape, up_sample
 
 import tensorflow as tf
 import pywt
@@ -129,8 +129,8 @@ class Benchmark:
             # feed images 1 by 1 because they have different sizes
 
             # lr_rgb = cv2.cvtColor(lr, cv2.COLOR_BGR2RGB)
-            # lr_rgb = up_sample(lr_rgb, factor=2)
-            lr_rgb = batch_dwt(lr[np.newaxis])
+            lr_rgb = up_sample(lr, factor=4)
+            lr_rgb = batch_dwt(lr_rgb[np.newaxis])
 
             lr_A = np.stack([lr_rgb[:,:,:,0], lr_rgb[:,:,:,4], lr_rgb[:,:,:,8]],axis=-1)
             lr_BCD = np.concatenate([lr_rgb[:,:,:,1:4], lr_rgb[:,:,:,5:8], lr_rgb[:,:,:,9:12]], axis=-1)
