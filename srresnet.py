@@ -176,7 +176,7 @@ class Srresnet:
         y_idwt_pred = tf_idwt(tf.concat([y_RA_pred, y_GA_pred, y_BA_pred], axis=-1))
         """MSE, VGG22, or VGG54"""
         if self.content_loss == 'mse':
-            return tf.reduce_mean(tf.square(y_A - y_A_pred))
+            return tf.reduce_mean(tf.square(y_A - y_idwt_pred))
 
         if self.content_loss == 'L1':
             return tf.reduce_mean(tf.abs(y_A - y_A_pred))
