@@ -162,7 +162,17 @@ class Srresnet:
     def _content_loss(self, y_A, y_A_pred, y_BCD, y_BCD_pred):
 
         tf_dwt_debug = tf_dwt(y_A_pred)
-        print('__DEBUG__tf_dwt_debug', tf_dwt_debug)
+        tf_dwt_debug_RA = tf.expand_dims(tf_dwt_debug[:,:,:,0], axis=-1)
+        tf_dwt_debug_GA =  tf.expand_dims(tf_dwt_debug[:,:,:,4], axis=-1)
+        tf_dwt_debug_BA =  tf.expand_dims(tf_dwt_debug[:,:,:,8], axis=-1)
+
+        print('__DEBUG__tf_dwt_debug', tf_dwt_debug_BA)
+
+        y_RA_pred = tf.concat([tf_dwt_debug_RA,y_BCD_pred[:,:,:,0:3]], axis=-1)
+        y_GA_pred = tf.concat([tf_dwt_debug_GA,y_BCD_pred[:,:,:,3:6]], axis=-1)
+        y_BA_pred = tf.concat([tf_dwt_debug_BA,y_BCD_pred[:,:,:,6:9]], axis=-1)
+
+        y_idwt_pred = tf_idwt(tf.concat([y_RA_pred, y_GA_pred, y_BA_pred], axis=-1))
         """MSE, VGG22, or VGG54"""
         if self.content_loss == 'mse':
             return tf.reduce_mean(tf.square(y_A - y_A_pred))
@@ -174,13 +184,13 @@ class Srresnet:
             lamd = 0.5
             # y_sobeled = tf.image.sobel_edges(y)
             # y_pred_sobeled = tf.image.sobel_edges(y_pred)
-            return tf.reduce_mean(tf.square(y_A - y_A_pred)) + (lamd*tf.reduce_mean(tf.square(y_BCD - y_BCD_pred)))
+            return tf.reduce_mean(tf.square(y_A - y_idwt_pred)) + (lamd*tf.reduce_mean(tf.square(y_BCD - y_BCD_pred)))
 
         if self.content_loss == 'edge_loss_L1':
             lamd = 0.5
             # y_sobeled = tf.image.sobel_edges(y)
             # y_pred_sobeled = tf.image.sobel_edges(y_pred)
-            return tf.reduce_mean(tf.abs(y_A - y_A_pred)) + (lamd*tf.reduce_mean(tf.square(y_BCD - y_BCD_pred)))
+            return tf.reduce_mean(tf.abs(y_A - y_idwt_pred)) + (lamd*tf.reduce_mean(tf.square(y_BCD - y_BCD_pred)))
 
     def loss_function(self, y_A, y_A_pred, y_BCD, y_BCD_pred):
 
