@@ -111,7 +111,7 @@ def downsample_batch(batch, factor):
 
 def up_sample(image, factor):
     """Downsampling function which matches photoshop"""
-    return scipy.misc.imresize(image, 2.0, interp='bicubic')
+    return scipy.misc.imresize(image, float(factor), interp='bicubic')
 
 
 def up_sample_batch(batch, factor):
