@@ -182,7 +182,7 @@ class Srresnet:
             return tf.reduce_mean(tf.abs(y_A - y_A_pred))
 
         if self.content_loss == 'edge_loss_mse':
-            lamd = 0.5
+            lamd = 0.05
             # y_sobeled = tf.image.sobel_edges(y)
             # y_pred_sobeled = tf.image.sobel_edges(y_pred)
             return tf.reduce_mean(tf.square(y_A - y_A_pred)) + (lamd*tf.reduce_mean(tf.square(y_BCD - y_BCD_pred)))
