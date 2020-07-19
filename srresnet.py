@@ -132,9 +132,9 @@ class Srresnet:
 
             x_BCD = self.RDBs(x_BCD)
             x_BCD = tf.nn.conv2d(x_BCD, weights['w_RDB_1'], strides=[1,1,1,1], padding='SAME')
-
-            for i in range(self.num_upsamples):
-                x_BCD = self.Upsample2xBlock(x_BCD, kernel_size=3, in_channel=64, filter_size=256)
+            x_BCD =  tf.contrib.keras.layers.PReLU(shared_axes=[1, 2])(x_BCD)
+            # for i in range(self.num_upsamples):
+            #     x_BCD = self.Upsample2xBlock(x_BCD, kernel_size=3, in_channel=64, filter_size=256)
 
             x_BCD_out = tf.nn.conv2d(x_BCD, weights['w_RDB_out'], strides=[1,1,1,1], padding='SAME')
             print('__DEBUG__',x_BCD)
@@ -149,10 +149,11 @@ class Srresnet:
             x_LL = tf.layers.batch_normalization(x_LL, training=self.training)
             x_LL = x_LL + skip
 
-            for i in range(self.num_upsamples):
-                x_LL = self.Upsample2xBlock(x_LL, kernel_size=3, in_channel=64, filter_size=256)
+            # for i in range(self.num_upsamples):
+            #     x_LL = self.Upsample2xBlock(x_LL, kernel_size=3, in_channel=64, filter_size=256)
 
             x_conv_out = tf.nn.conv2d(x_LL, weights['w_resnet_out'], strides=[1,1,1,1], padding='SAME', name='y_predict')
+            x_conv_out =  tf.contrib.keras.layers.PReLU(shared_axes=[1, 2])(x_conv_out)
 
             # x_conv_out = x_conv_out + input_x
             print(x_conv_out)
@@ -161,8 +162,18 @@ class Srresnet:
 
     def _content_loss(self, y_A, y_A_pred, y_BCD, y_BCD_pred):
 
-        tf_dwt_debug = tf_dwt(y_A_pred)
-        print('__DEBUG__tf_dwt_debug', tf_dwt_debug)
+        # tf_dwt_debug = tf_dwt(y_A_pred)
+        tf_dwt_debug_RA = tf.expand_dims(y_A_pred[:,:,:,0], axis=-1)
+        tf_dwt_debug_GA = tf.expand_dims(y_A_pred[:,:,:,1], axis=-1)
+        tf_dwt_debug_BA = tf.expand_dims(y_A_pred[:,:,:,2], axis=-1)
+
+        print('__DEBUG__tf_dwt_debug', tf_dwt_debug_RA)
+
+        y_RA_pred = tf.concat([tf_dwt_debug_RA,y_BCD_pred[:,:,:,0:3]], axis=-1)
+        y_GA_pred = tf.concat([tf_dwt_debug_GA,y_BCD_pred[:,:,:,3:6]], axis=-1)
+        y_BA_pred = tf.concat([tf_dwt_debug_BA,y_BCD_pred[:,:,:,6:9]], axis=-1)
+
+        y_idwt_pred = tf_idwt(tf.concat([y_RA_pred, y_GA_pred, y_BA_pred], axis=-1))
         """MSE, VGG22, or VGG54"""
         if self.content_loss == 'mse':
             return tf.reduce_mean(tf.square(y_A - y_A_pred))
@@ -174,13 +185,13 @@ class Srresnet:
             lamd = 0.5
             # y_sobeled = tf.image.sobel_edges(y)
             # y_pred_sobeled = tf.image.sobel_edges(y_pred)
-            return tf.reduce_mean(tf.square(y_A - y_A_pred)) + (lamd*tf.reduce_mean(tf.square(y_BCD - y_BCD_pred)))
+            return tf.reduce_mean(tf.square(y_A - y_idwt_pred)) + (lamd*tf.reduce_mean(tf.square(y_BCD - y_BCD_pred)))
 
         if self.content_loss == 'edge_loss_L1':
             lamd = 0.5
             # y_sobeled = tf.image.sobel_edges(y)
             # y_pred_sobeled = tf.image.sobel_edges(y_pred)
-            return tf.reduce_mean(tf.abs(y_A - y_A_pred)) + (lamd*tf.reduce_mean(tf.square(y_BCD - y_BCD_pred)))
+            return tf.reduce_mean(tf.abs(y_A - y_idwt_pred)) + (lamd*tf.reduce_mean(tf.square(y_BCD - y_BCD_pred)))
 
     def loss_function(self, y_A, y_A_pred, y_BCD, y_BCD_pred):
 

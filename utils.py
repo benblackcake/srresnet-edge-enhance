@@ -159,14 +159,17 @@ def evaluate_model(loss_function, get_batch, sess, num_images, batch_size):
     total = 0
     for i in range(int(math.ceil(num_images / batch_size))):
 
-        batch_hr = batch_bgr2rgb(get_batch)
-        batch_lr = downsample_batch(batch_hr, factor=4)
+        batch_hr = batch_bgr2rgb(batch_hr)
+        batch_lr = downsample_batch(batch_hr, factor=4.0)
+        batch_lr = up_sample_batch(batch_hr, factor=4.0)
 
         # batch_lr = up_sample_batch(batch_lr, factor=2)
 
         batch_dwt_hr = batch_dwt(batch_hr)
         batch_dwt_lr = batch_dwt(batch_lr)
 
+        batch_hr_A = np.stack([batch_dwt_hr[:,:,:,0], batch_dwt_hr[:,:,:,4], batch_dwt_hr[:,:,:,8]])
+        batch_lr_A = np.stack([batch_dwt_lr[:,:,:,0], batch_dwt_lr[:,:,:,4], batch_dwt_lr[:,:,:,8]])
         # print(batch_dwt_hr[:,:,:,1:4].shape)
         batch_hr_BCD = np.concatenate([batch_dwt_hr[:,:,:,1:4], batch_dwt_hr[:,:,:,5:8], batch_dwt_hr[:,:,:,9:12]], axis=-1)
         batch_lr_BCD = np.concatenate([batch_dwt_lr[:,:,:,1:4], batch_dwt_lr[:,:,:,5:8], batch_dwt_lr[:,:,:,9:12]], axis=-1)
@@ -202,9 +205,9 @@ def evaluate_model(loss_function, get_batch, sess, num_images, batch_size):
 
         loss += sess.run(loss_function,
                          feed_dict={'srresnet_training:0': False,\
-                                    'LR_DWT_A:0': batch_lr,\
+                                    'LR_DWT_A:0': batch_lr_A,\
                                     'LR_DWT_edge:0': batch_lr_BCD,\
-                                    'HR_DWT_A:0': batch_hr,\
+                                    'HR_DWT_A:0': batch_hr_A,\
                                     'HR_DWT_edge:0': batch_hr_BCD,\
                                     })
         total += 1
@@ -257,13 +260,13 @@ def batch_dwt(batch):
 
     for i in range(batch.shape[0]):
         LL_r, (LH_r, HL_r, HH_r) = pywt.dwt2(batch[i,:,:,0], 'haar')
-        coeffs_R = np.stack([LL_r,LH_r, HL_r, HH_r],axis=-1)
+        coeffs_R = np.stack([LL_r,LH_r, HL_r, HH_r])
 
         LL_g, (LH_g, HL_g, HH_g) = pywt.dwt2(batch[i,:,:,1], 'haar')
-        coeffs_G = np.stack([LL_g,LH_g, HL_g, HH_g],axis=-1)
+        coeffs_G = np.stack([LL_g,LH_g, HL_g, HH_g])
 
         LL_b, (LH_b, HL_b, HH_b) = pywt.dwt2(batch[i,:,:,2], 'haar')
-        coeffs_B = np.stack([LL_b,LH_b, HL_b, HH_b],axis=-1)
+        coeffs_B = np.stack([LL_b,LH_b, HL_b, HH_b])
 
         coeffs = np.concatenate([coeffs_R, coeffs_G, coeffs_B], axis=-1)
 
