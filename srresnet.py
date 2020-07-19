@@ -176,7 +176,7 @@ class Srresnet:
         y_idwt_pred = tf_idwt(tf.concat([y_RA_pred, y_GA_pred, y_BA_pred], axis=-1))
         """MSE, VGG22, or VGG54"""
         if self.content_loss == 'mse':
-            return tf.reduce_mean(tf.square(y_A - y_idwt_pred))
+            return tf.reduce_mean(tf.square(y_A - y_A_pred))
 
         if self.content_loss == 'L1':
             return tf.reduce_mean(tf.abs(y_A - y_A_pred))
@@ -185,13 +185,13 @@ class Srresnet:
             lamd = 0.5
             # y_sobeled = tf.image.sobel_edges(y)
             # y_pred_sobeled = tf.image.sobel_edges(y_pred)
-            return tf.reduce_mean(tf.square(y_A - y_idwt_pred)) + (lamd*tf.reduce_mean(tf.square(y_BCD - y_BCD_pred)))
+            return tf.reduce_mean(tf.square(y_A - y_A_pred)) + (lamd*tf.reduce_mean(tf.square(y_BCD - y_BCD_pred)))
 
         if self.content_loss == 'edge_loss_L1':
             lamd = 0.5
             # y_sobeled = tf.image.sobel_edges(y)
             # y_pred_sobeled = tf.image.sobel_edges(y_pred)
-            return tf.reduce_mean(tf.abs(y_A - y_idwt_pred)) + (lamd*tf.reduce_mean(tf.square(y_BCD - y_BCD_pred)))
+            return tf.reduce_mean(tf.abs(y_A - y_A_pred)) + (lamd*tf.reduce_mean(tf.square(y_BCD - y_BCD_pred)))
 
     def loss_function(self, y_A, y_A_pred, y_BCD, y_BCD_pred):
 

@@ -207,7 +207,7 @@ def evaluate_model(loss_function, get_batch, sess, num_images, batch_size):
                          feed_dict={'srresnet_training:0': False,\
                                     'LR_DWT_A:0': batch_lr_A,\
                                     'LR_DWT_edge:0': batch_lr_BCD,\
-                                    'HR_DWT_A:0': batch_hr,\
+                                    'HR_DWT_A:0': batch_hr_A,\
                                     'HR_DWT_edge:0': batch_hr_BCD,\
                                     })
         total += 1

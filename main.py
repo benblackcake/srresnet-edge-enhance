@@ -254,7 +254,7 @@ def main():
                          feed_dict={srresnet_training: True,\
                                     lr_A: batch_lr_A,\
                                     lr_dwt_edge: batch_lr_BCD,\
-                                    hr_A: batch_hr,\
+                                    hr_A: batch_hr_A,\
                                     hr_dwt_edge: batch_hr_BCD,\
 
                                     })
