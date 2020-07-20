@@ -169,7 +169,7 @@ class Benchmark:
             # cv2.waitKey(0)
 
 
-            output = sess.run([sr_pred], feed_dict={'srresnet_training:0': False,\
+            output = sess.run(sr_pred, feed_dict={'srresnet_training:0': False,\
                                                 # 'LR_DWT_A:0': lr_A,\
                                                 'LR_DWT_edge:0': lr_dwt_rgb,\
                                                 # 'LR_edge:0': lr_edge[np.newaxis]
