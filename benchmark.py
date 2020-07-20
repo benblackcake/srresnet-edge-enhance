@@ -121,7 +121,7 @@ class Benchmark:
             if count >= 14:
                 break
 
-    def evaluate(self, sess, sr_A_pred, sr_BCD_pred, log_path=None, iteration=0):
+    def evaluate(self, sess, sr_pred, log_path=None, iteration=0):
         """Evaluate benchmark, returning the score and saving images."""
 
         pred = []
@@ -130,14 +130,14 @@ class Benchmark:
 
             # lr_rgb = cv2.cvtColor(lr, cv2.COLOR_BGR2RGB)
             lr_rgb = up_sample(lr, factor=4)
-            lr_rgb = batch_dwt(lr_rgb[np.newaxis])
+            lr_dwt_rgb = batch_dwt(lr_rgb[np.newaxis])
 
-            lr_A = np.stack([lr_rgb[:,:,:,0], lr_rgb[:,:,:,4], lr_rgb[:,:,:,8]],axis=-1)
-            lr_BCD = np.concatenate([lr_rgb[:,:,:,1:4], lr_rgb[:,:,:,5:8], lr_rgb[:,:,:,9:12]], axis=-1)
+            # lr_A = np.stack([lr_rgb[:,:,:,0], lr_rgb[:,:,:,4], lr_rgb[:,:,:,8]],axis=-1)
+            # lr_BCD = np.concatenate([lr_rgb[:,:,:,1:4], lr_rgb[:,:,:,5:8], lr_rgb[:,:,:,9:12]], axis=-1)
 
-            print('___debug___')
+            # print('___debug___')
             # print(lr_A.shape)
-            print(lr_BCD.shape)
+            # print(lr_BCD.shape)
             # lr_rgb = cv2.cvtColor(lr, cv2.COLOR_BGR2RGB)
             # print(lr_rgb.shape)
 
@@ -169,9 +169,9 @@ class Benchmark:
             # cv2.waitKey(0)
 
 
-            output_A, output_BCD = sess.run([sr_A_pred, sr_BCD_pred], feed_dict={'srresnet_training:0': False,\
-                                                'LR_DWT_A:0': lr_A,\
-                                                'LR_DWT_edge:0': lr_BCD,\
+            output = sess.run([sr_pred], feed_dict={'srresnet_training:0': False,\
+                                                # 'LR_DWT_A:0': lr_A,\
+                                                'LR_DWT_edge:0': lr_dwt_rgb,\
                                                 # 'LR_edge:0': lr_edge[np.newaxis]
                                                 })
             # print('__DEBUG__ Benchmark evaluate', output.shape)
@@ -182,12 +182,12 @@ class Benchmark:
             # output_A = batch_dwt(output_A)
 
 
-            rect_R = np.concatenate([np.expand_dims(output_A[:,:,:,0],axis=-1), output_BCD[:,:,:,0:3]], axis=-1)
-            rect_G = np.concatenate([np.expand_dims(output_A[:,:,:,1],axis=-1), output_BCD[:,:,:,3:6]], axis=-1)
-            rect_B = np.concatenate([np.expand_dims(output_A[:,:,:,2],axis=-1), output_BCD[:,:,:,6:9]], axis=-1)
+            # rect_R = np.concatenate([np.expand_dims(output_A[:,:,:,0],axis=-1), output_BCD[:,:,:,0:3]], axis=-1)
+            # rect_G = np.concatenate([np.expand_dims(output_A[:,:,:,1],axis=-1), output_BCD[:,:,:,3:6]], axis=-1)
+            # rect_B = np.concatenate([np.expand_dims(output_A[:,:,:,2],axis=-1), output_BCD[:,:,:,6:9]], axis=-1)
 
-            output = np.concatenate([rect_R, rect_G, rect_B], axis=-1)
-            print(output.shape)
+            # output = np.concatenate([rect_R, rect_G, rect_B], axis=-1)
+            # print(output.shape)
             result = batch_Idwt(output)
             result = np.squeeze(result, axis=0)
             result =np.clip(np.abs(result),0,255).astype(np.uint8)

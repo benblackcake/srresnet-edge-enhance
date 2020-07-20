@@ -51,14 +51,14 @@ def main():
                               content_loss=args.content_loss,\
                               num_upsamples=args.upSample)
 
-    lr_A = tf.placeholder(tf.float32, [None, None, None, 3], name='LR_DWT_A')
-    lr_dwt_edge = tf.placeholder(tf.float32, [None, None, None, 9], name='LR_DWT_edge')
-    hr_A = tf.placeholder(tf.float32, [None, None, None, 3], name='HR_DWT_A')
-    hr_dwt_edge = tf.placeholder(tf.float32, [None, None, None, 9], name='HR_DWT_edge')
+    # lr_A = tf.placeholder(tf.float32, [None, None, None, 3], name='LR_DWT_A')
+    lr_dwt_edge = tf.placeholder(tf.float32, [None, None, None, 12], name='LR_DWT_edge')
+    # hr_A = tf.placeholder(tf.float32, [None, None, None, 3], name='HR_DWT_A')
+    hr_dwt_edge = tf.placeholder(tf.float32, [None, None, None, 12], name='HR_DWT_edge')
 
 
-    sr_A_pred, sr_BCD_pred = srresnet_model.forward(lr_A, lr_dwt_edge)
-    sr_loss = srresnet_model.loss_function(hr_A, sr_A_pred, hr_dwt_edge, sr_BCD_pred)
+    sr_pred = srresnet_model.forward(lr_dwt_edge)
+    sr_loss = srresnet_model.loss_function(hr_dwt_edge, sr_pred)
     sr_opt = srresnet_model.optimize(sr_loss)
 
     benchmarks = [
@@ -158,7 +158,7 @@ def main():
                         # Evaluate benchmarks
                         log_line = ''
                         for benchmark in benchmarks:
-                            psnr, ssim, _, _ = benchmark.evaluate(sess, sr_A_pred, sr_BCD_pred, log_path, iteration)
+                            psnr, ssim, _, _ = benchmark.evaluate(sess, sr_pred, log_path, iteration)
                         # #     # benchmark.evaluate(sess, sr_pred, log_path, iteration)
                             print(' [%s] PSNR: %.2f, SSIM: %.4f' % (benchmark.name, psnr, ssim), end='')
                             log_line += ',%.7f, %.7f' % (psnr, ssim)
@@ -183,11 +183,11 @@ def main():
                     batch_dwt_hr = batch_dwt(batch_hr)
                     batch_dwt_lr = batch_dwt(batch_lr)
 
-                    batch_hr_A = np.stack([batch_dwt_hr[:,:,:,0], batch_dwt_hr[:,:,:,4], batch_dwt_hr[:,:,:,8]], axis=-1)
-                    batch_lr_A = np.stack([batch_dwt_lr[:,:,:,0], batch_dwt_lr[:,:,:,4], batch_dwt_lr[:,:,:,8]], axis=-1)
+                    # batch_hr_A = np.stack([batch_dwt_hr[:,:,:,0], batch_dwt_hr[:,:,:,4], batch_dwt_hr[:,:,:,8]], axis=-1)
+                    # batch_lr_A = np.stack([batch_dwt_lr[:,:,:,0], batch_dwt_lr[:,:,:,4], batch_dwt_lr[:,:,:,8]], axis=-1)
 
-                    batch_hr_BCD = np.concatenate([batch_dwt_hr[:,:,:,1:4], batch_dwt_hr[:,:,:,5:8], batch_dwt_hr[:,:,:,9:12]], axis=-1)
-                    batch_lr_BCD = np.concatenate([batch_dwt_lr[:,:,:,1:4], batch_dwt_lr[:,:,:,5:8], batch_dwt_lr[:,:,:,9:12]], axis=-1)
+                    # batch_hr_BCD = np.concatenate([batch_dwt_hr[:,:,:,1:4], batch_dwt_hr[:,:,:,5:8], batch_dwt_hr[:,:,:,9:12]], axis=-1)
+                    # batch_lr_BCD = np.concatenate([batch_dwt_lr[:,:,:,1:4], batch_dwt_lr[:,:,:,5:8], batch_dwt_lr[:,:,:,9:12]], axis=-1)
 
                     # batch_hr_y = np.expand_dims(ycbcr_batch[:,:,:,0], axis=-1) #Get batch Y channel image
                     # batch_hr_cr = np.expand_dims(ycbcr_batch[:,:,:,1], axis=-1) #Get batch cr channel image
@@ -252,10 +252,10 @@ def main():
 
                     _, err = sess.run([sr_opt,sr_loss],\
                          feed_dict={srresnet_training: True,\
-                                    lr_A: batch_lr_A,\
-                                    lr_dwt_edge: batch_lr_BCD,\
-                                    hr_A: batch_hr_A,\
-                                    hr_dwt_edge: batch_hr_BCD,\
+                                    # lr_A: batch_lr_A,\
+                                    lr_dwt_edge: batch_dwt_lr,\
+                                    # hr_A: batch_hr_A,\
+                                    hr_dwt_edge: batch_dwt_hr,\
 
                                     })
 
