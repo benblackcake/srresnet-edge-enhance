@@ -167,11 +167,12 @@ def evaluate_model(loss_function, get_batch, sess, num_images, batch_size):
         batch_hr_BCD = np.concatenate([batch_dwt_lr[:,:,:,1:4], batch_dwt_lr[:,:,:,5:8], batch_dwt_lr[:,:,:,9:12]], axis=-1)
         batch_lr_BCD = np.concatenate([up_sample_batch(batch_dwt_lr_A[:,:,:,1:4], factor=2), up_sample_batch(batch_dwt_lr_A[:,:,:,5:8], factor=2), up_sample_batch(batch_dwt_lr_A[:,:,:,9:12], factor=2)], axis=-1)
         # batch_lr = downsample_batch(batch_hr, factor=4)
-        print(batch_lr_BCD.shape)
         # batch_lr_BCD = up_sample_batch(batch_lr_BCD, factor=2)
 
         batch_hr_BCD = batch_hr_BCD/255.
         batch_lr_BCD = batch_lr_BCD/255.
+        # print('__DEBUG__hr_BCD',batch_hr_BCD.shape)
+        # print('__DEBUG__lr_BCD',batch_lr_BCD.shape)
 
         # batch_hr_A = np.stack([batch_dwt_hr[:,:,:,0], batch_dwt_hr[:,:,:,4], batch_dwt_hr[:,:,:,8]], axis=-1)
         # batch_lr_A = np.stack([batch_dwt_lr[:,:,:,0], batch_dwt_lr[:,:,:,4], batch_dwt_lr[:,:,:,8]], axis=-1)
