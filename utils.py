@@ -160,8 +160,8 @@ def evaluate_model(loss_function, get_batch, sess, num_images, batch_size):
     for i in range(int(math.ceil(num_images / batch_size))):
 
         batch_hr = batch_bgr2rgb(get_batch)
-        batch_lr = downsample_batch(batch_hr, factor=4)
-        batch_lr = up_sample_batch(batch_lr, factor=4)
+        batch_lr = downsample_batch(batch_hr, factor=4)/255.
+        batch_lr = up_sample_batch(batch_lr, factor=4)/255.
 
         # batch_lr = up_sample_batch(batch_lr, factor=2)
 

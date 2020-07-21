@@ -175,8 +175,8 @@ def main():
 
                     # ycbcr_batch = batch_bgr2ycbcr(batch_hr)
                     batch_hr = batch_bgr2rgb(batch_hr)
-                    batch_lr = downsample_batch(batch_hr, factor=4)
-                    batch_lr = up_sample_batch(batch_lr, factor=4)
+                    batch_lr = downsample_batch(batch_hr, factor=4)/255.
+                    batch_lr = up_sample_batch(batch_lr, factor=4)/255.
 
                     # batch_lr = up_sample_batch(batch_lr, factor=2)
 
