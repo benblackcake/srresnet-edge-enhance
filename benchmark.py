@@ -187,10 +187,12 @@ class Benchmark:
             # rect_B = np.concatenate([np.expand_dims(output_A[:,:,:,2],axis=-1), output_BCD[:,:,:,6:9]], axis=-1)
 
             # output = np.concatenate([rect_R, rect_G, rect_B], axis=-1)
-            # print(output.shape)
+            print(output.shape)
             result = batch_Idwt(output)
             result = np.squeeze(result, axis=0)
-            result =np.clip(np.abs(result),0,255).astype(np.uint8)
+            result =np.clip(np.abs(result),0,255)
+
+            result = result.astype('uint8')
 
             # output =np.clip*255(np.abs(output*255.),0,255).astype(np.uint8)
 
