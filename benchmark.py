@@ -129,7 +129,9 @@ class Benchmark:
             # feed images 1 by 1 because they have different sizes
 
             # lr_rgb = cv2.cvtColor(lr, cv2.COLOR_BGR2RGB)
-            lr_rgb = up_sample(lr, factor=4)
+            lr_rgb = up_sample(lr, factor=4)/255.
+
+            lr_rgb = lr_rgb.astype('float64')
             lr_dwt_rgb = batch_dwt(lr_rgb[np.newaxis])
 
             # lr_A = np.stack([lr_rgb[:,:,:,0], lr_rgb[:,:,:,4], lr_rgb[:,:,:,8]],axis=-1)
@@ -187,8 +189,12 @@ class Benchmark:
             # rect_B = np.concatenate([np.expand_dims(output_A[:,:,:,2],axis=-1), output_BCD[:,:,:,6:9]], axis=-1)
 
             # output = np.concatenate([rect_R, rect_G, rect_B], axis=-1)
-            print(output.shape)
+
+            # print(output.shape)
+            output = output *255.
+
             result = batch_Idwt(output)
+
             result = np.squeeze(result, axis=0)
             result =np.clip(np.abs(result),0,255)
 
