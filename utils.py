@@ -117,7 +117,7 @@ def up_sample(image, factor):
 def up_sample_batch(batch, factor):
     upsampled = np.zeros((batch.shape[0], batch.shape[1] * factor, batch.shape[2] * factor, 3))
     for i in range(batch.shape[0]):
-        # print(up_sample(batch[i, :, :, :], factor).shape)
+        # print(batch[i, :, :, :].shape)
         upsampled[i, :, :, :] = up_sample(batch[i, :, :, :], factor)
     print(upsampled.shape)
     return upsampled
@@ -160,13 +160,18 @@ def evaluate_model(loss_function, get_batch, sess, num_images, batch_size):
     for i in range(int(math.ceil(num_images / batch_size))):
 
         batch_hr = batch_bgr2rgb(get_batch)
-        batch_lr = downsample_batch(batch_hr, factor=4)
-        batch_lr = up_sample_batch(batch_lr, factor=4)
+        batch_dwt_lr = batch_dwt(batch_hr)
+        batch_dwt_lr_A = np.stack([batch_dwt_lr[:,:,:,0], batch_dwt_lr[:,:,:,4], batch_dwt_lr[:,:,:,8]], axis=-1)
+        batch_dwt_lr_A = batch_dwt(batch_dwt_lr_A)
 
-        # batch_lr = up_sample_batch(batch_lr, factor=2)
+        batch_hr_BCD = np.concatenate([batch_dwt_lr[:,:,:,1:4], batch_dwt_lr[:,:,:,5:8], batch_dwt_lr[:,:,:,9:12]], axis=-1)
+        batch_lr_BCD = np.concatenate([up_sample_batch(batch_dwt_lr_A[:,:,:,1:4], factor=2), up_sample_batch(batch_dwt_lr_A[:,:,:,5:8], factor=2), up_sample_batch(batch_dwt_lr_A[:,:,:,9:12], factor=2)], axis=-1)
+        # batch_lr = downsample_batch(batch_hr, factor=4)
+        print(batch_lr_BCD.shape)
+        # batch_lr_BCD = up_sample_batch(batch_lr_BCD, factor=2)
 
-        batch_dwt_hr = batch_dwt(batch_hr)/255.
-        batch_dwt_lr = batch_dwt(batch_lr)/255.
+        batch_hr_BCD = batch_hr_BCD/255.
+        batch_lr_BCD = batch_lr_BCD/255.
 
         # batch_hr_A = np.stack([batch_dwt_hr[:,:,:,0], batch_dwt_hr[:,:,:,4], batch_dwt_hr[:,:,:,8]], axis=-1)
         # batch_lr_A = np.stack([batch_dwt_lr[:,:,:,0], batch_dwt_lr[:,:,:,4], batch_dwt_lr[:,:,:,8]], axis=-1)
@@ -206,9 +211,9 @@ def evaluate_model(loss_function, get_batch, sess, num_images, batch_size):
         loss += sess.run(loss_function,
                          feed_dict={'srresnet_training:0': False,\
                                     # 'LR_DWT_A:0': batch_lr_A,\
-                                    'LR_DWT_edge:0': batch_dwt_lr,\
+                                    'LR_DWT_edge:0': batch_lr_BCD,\
                                     # 'HR_DWT_A:0': batch_hr_A,\
-                                    'HR_DWT_edge:0': batch_dwt_hr,\
+                                    'HR_DWT_edge:0': batch_hr_BCD,\
                                     })
         total += 1
     loss = loss / total

@@ -117,9 +117,9 @@ class Srresnet:
             # x = tf.concat([x, x_edge],axis=3, name='x_input_concate')
             input_x = x
             weights = {
-                'w_resnet_in': tf.Variable(tf.random_normal([9, 9, 12, 64], stddev=1e-3), name='w_resnet_in'),
+                'w_resnet_in': tf.Variable(tf.random_normal([9, 9, 9, 64], stddev=1e-3), name='w_resnet_in'),
                 'w_resnet_1': tf.Variable(tf.random_normal([3, 3, 64, 64], stddev=1e-3), name='w_resnet_1'),
-                'w_resnet_out': tf.Variable(tf.random_normal([9, 9, 64, 12], stddev=1e-3), name='w_resnet_out'),
+                'w_resnet_out': tf.Variable(tf.random_normal([9, 9, 64, 9], stddev=1e-3), name='w_resnet_out'),
                 # 'w_RDB_in': tf.Variable(tf.random_normal([9, 9, 9, 64], stddev=1e-3), name='w_resnet_in'),
                 # 'w_RDB_1': tf.Variable(tf.random_normal([9, 9, 192, 64], stddev=1e-3), name='w_resnet_in'),
                 # 'w_RDB_out': tf.Variable(tf.random_normal([9, 9, 64, 9], stddev=1e-3), name='w_resnet_in'),

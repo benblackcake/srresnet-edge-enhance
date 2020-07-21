@@ -6,7 +6,7 @@ from skimage.measure import compare_ssim
 from skimage.color import rgb2ycbcr, rgb2yuv
 
 from skimage.measure import compare_psnr
-from utils import preprocess, downsample, sobel_oper, modcrop, cany_oper, sobel_direct_oper, batch_Idwt, batch_dwt,dwt_shape, up_sample
+from utils import preprocess, downsample, sobel_oper, modcrop, cany_oper, sobel_direct_oper, batch_Idwt, batch_dwt,dwt_shape, up_sample,up_sample_batch
 
 import tensorflow as tf
 import pywt
@@ -23,7 +23,7 @@ class Benchmark:
         self.images_lr = []
         for img in self.images_hr:
             # print(img.shape)
-            self.images_lr.append(downsample(img, 4))
+            self.images_lr.append(downsample(img, 2))
 
     def load_images_by_model(self, model, file_format='*'):
         """Loads all images that match '*_{model}.{file_format}' and returns sorted list of filenames and names"""
@@ -125,14 +125,24 @@ class Benchmark:
         """Evaluate benchmark, returning the score and saving images."""
 
         pred = []
-        for i, lr in enumerate(self.images_lr):
+        for i, hr in enumerate(self.images_hr):
             # feed images 1 by 1 because they have different sizes
+            lr_dwt = batch_dwt(hr[np.newaxis])
+            lr_A = np.stack([lr_dwt[:,:,:,0], lr_dwt[:,:,:,4], lr_dwt[:,:,:,8]], axis=-1)
+
+            # hr_dwt_A_rgb = np.stack([hr_dwt[:,:,:,0], hr_dwt[:,:,:,4], hr_dwt[:,:,:,8]], axis=-1)
+
+            # lr_A_rgb = np.stack([hr_dwt[:,:,:,0], hr_dwt[:,:,:,4], hr_dwt[:,:,:,8]], axis=-1)
+            lr_dwt_A = batch_dwt(lr_A)
+            lr_dwt_A_BCD = np.concatenate([up_sample_batch(lr_dwt_A[:,:,:,1:4], factor=2), up_sample_batch(lr_dwt_A[:,:,:,5:8], factor=2), up_sample_batch(lr_dwt_A[:,:,:,9:12], factor=2)], axis=-1)
+
+            # lr_dwt_A_BCD = up_sample_batch(lr_dwt_A_BCD, factor=2)
 
             # lr_rgb = cv2.cvtColor(lr, cv2.COLOR_BGR2RGB)
-            lr_rgb = up_sample(lr, factor=4)/255.
+            # lr_rgb = up_sample(lr, factor=4)/255.
 
-            lr_rgb = lr_rgb.astype('float64')
-            lr_dwt_rgb = batch_dwt(lr_rgb[np.newaxis])
+            # lr_rgb = lr_rgb.astype('float64')
+            # lr_dwt_rgb = batch_dwt(lr_rgb[np.newaxis])
 
             # lr_A = np.stack([lr_rgb[:,:,:,0], lr_rgb[:,:,:,4], lr_rgb[:,:,:,8]],axis=-1)
             # lr_BCD = np.concatenate([lr_rgb[:,:,:,1:4], lr_rgb[:,:,:,5:8], lr_rgb[:,:,:,9:12]], axis=-1)
@@ -173,7 +183,7 @@ class Benchmark:
 
             output = sess.run(sr_pred, feed_dict={'srresnet_training:0': False,\
                                                 # 'LR_DWT_A:0': lr_A,\
-                                                'LR_DWT_edge:0': lr_dwt_rgb,\
+                                                'LR_DWT_edge:0': lr_dwt_A_BCD,\
                                                 # 'LR_edge:0': lr_edge[np.newaxis]
                                                 })
             # print('__DEBUG__ Benchmark evaluate', output.shape)
@@ -191,14 +201,21 @@ class Benchmark:
             # output = np.concatenate([rect_R, rect_G, rect_B], axis=-1)
 
             # print(output.shape)
-            output = output *255.
+            Idwt_R = pywt.idwt2((lr_A[:,:,0],(output[:,:,0],output[:,:,1],output[:,:,2])), wavelet='haar')*255
+            Idwt_G = pywt.idwt2((lr_A[:,:,1],(output[:,:,3],output[:,:,4],output[:,:,5])), wavelet='haar')*255
+            Idwt_B = pywt.idwt2((lr_A[:,:,2],(output[:,:,6],output[:,:,7],output[:,:,8])), wavelet='haar')*255
 
-            result = batch_Idwt(output)
+            result = np.clip(np.abs(cv2.merge([Idwt_R, Idwt_G, Idwt_B])),0,255).astype('uint8') 
 
-            result = np.squeeze(result, axis=0)
-            result =np.clip(np.abs(result),0,255)
 
-            result = result.astype('uint8')
+            # output = output *255.
+
+            # result = batch_Idwt(output)
+
+            # result = np.squeeze(result, axis=0)
+            # result =np.clip(np.abs(result),0,255)
+
+            # result = result.astype('uint8')
 
             # output =np.clip*255(np.abs(output*255.),0,255).astype(np.uint8)
 
