@@ -37,7 +37,7 @@ class Benchmark:
         """Given a list of file names, return a list of images"""
         out = []
         for image in images:
-            out.append(dwt_shape(cv2.cvtColor(cv2.imread(image), cv2.COLOR_BGR2RGB).astype(np.uint8)))
+            out.append(modcrop(cv2.cvtColor(cv2.imread(image), cv2.COLOR_BGR2RGB).astype(np.uint8)))
         return out
 
     def deprocess(self, image):
@@ -49,7 +49,7 @@ class Benchmark:
         # Get luminance
         lum = rgb2ycbcr(image)[:, :, 0]
         # Crop off 4 border pixels
-        lum = lum[8:lum.shape[0] - 8, 8:lum.shape[1] - 8]
+        lum = lum[4:lum.shape[0] - 4, 4:lum.shape[1] - 4]
         # lum = lum.astype(np.float64)
         return lum
 
@@ -134,7 +134,9 @@ class Benchmark:
 
             # lr_A_rgb = np.stack([hr_dwt[:,:,:,0], hr_dwt[:,:,:,4], hr_dwt[:,:,:,8]], axis=-1)
             lr_dwt_A = batch_dwt(lr_A)
-            lr_dwt_A_BCD = np.concatenate([up_sample_batch(lr_dwt_A[:,:,:,1:4], factor=2), up_sample_batch(lr_dwt_A[:,:,:,5:8], factor=2), up_sample_batch(lr_dwt_A[:,:,:,9:12], factor=2)], axis=-1)
+            lr_dwt_A_BCD = np.concatenate([up_sample_batch(lr_dwt_A[:,:,:,1:4], factor=2),\
+                                           up_sample_batch(lr_dwt_A[:,:,:,5:8], factor=2),\
+                                           up_sample_batch(lr_dwt_A[:,:,:,9:12], factor=2)], axis=-1)
             lr_dwt_A_BCD /= 255.
             # lr_dwt_A_BCD = up_sample_batch(lr_dwt_A_BCD, factor=2)
 
