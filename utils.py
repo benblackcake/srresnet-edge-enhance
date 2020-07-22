@@ -119,7 +119,7 @@ def up_sample_batch(batch, factor):
     for i in range(batch.shape[0]):
         # print(batch[i, :, :, :].shape)
         upsampled[i, :, :, :] = up_sample(batch[i, :, :, :], factor)
-    print(upsampled.shape)
+    # print(upsampled.shape)
     return upsampled
 
 def build_log_dir(args, arguments):
@@ -304,13 +304,13 @@ def batch_Idwt(batch):
 def dwt_shape(img):
     if len(img.shape) ==3:
         h, w, _ = img.shape
-        print(h)
-        print(w)
+        # print(h)
+        # print(w)
         h = (h//2+(h//2%8))*2
         w = (w//2+(w//2%8))*2
 
-        print(w)
-        print(w-img.shape[1])
+        # print(w)
+        # print(w-img.shape[1])
         # img = np.pad(img ,pad_width=((h-img.shape[0], w-img.shape[1],0)), 'constant', constant_values=0)
         img = np.pad(array=img, pad_width=(((h-img.shape[0])//2,(h-img.shape[0])//2),((w-img.shape[1])//2, (w-img.shape[1])//2),(0,0)), mode='constant', constant_values=(0,0))
         # img = img[0:h, 0:w, :]

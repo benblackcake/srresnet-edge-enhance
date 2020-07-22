@@ -49,7 +49,7 @@ class Benchmark:
         # Get luminance
         lum = rgb2ycbcr(image)[:, :, 0]
         # Crop off 4 border pixels
-        lum = lum[4:lum.shape[0] - 4, 4:lum.shape[1] - 4]
+        lum = lum[8:lum.shape[0] - 8, 8:lum.shape[1] - 8]
         # lum = lum.astype(np.float64)
         return lum
 
@@ -135,7 +135,7 @@ class Benchmark:
             # lr_A_rgb = np.stack([hr_dwt[:,:,:,0], hr_dwt[:,:,:,4], hr_dwt[:,:,:,8]], axis=-1)
             lr_dwt_A = batch_dwt(lr_A)
             lr_dwt_A_BCD = np.concatenate([up_sample_batch(lr_dwt_A[:,:,:,1:4], factor=2), up_sample_batch(lr_dwt_A[:,:,:,5:8], factor=2), up_sample_batch(lr_dwt_A[:,:,:,9:12], factor=2)], axis=-1)
-
+            lr_dwt_A_BCD /= 255.
             # lr_dwt_A_BCD = up_sample_batch(lr_dwt_A_BCD, factor=2)
 
             # lr_rgb = cv2.cvtColor(lr, cv2.COLOR_BGR2RGB)
@@ -200,7 +200,12 @@ class Benchmark:
 
             # output = np.concatenate([rect_R, rect_G, rect_B], axis=-1)
 
-            # print(output.shape)
+            # print('__DEBUG__output_shape',output.shape)
+            # print('__DEBUG__lr_A_shape',lr_A.shape)
+
+            lr_A = np.squeeze(lr_A, axis=0)/255.
+            output = np.squeeze(output, axis=0)
+
             Idwt_R = pywt.idwt2((lr_A[:,:,0],(output[:,:,0],output[:,:,1],output[:,:,2])), wavelet='haar')*255
             Idwt_G = pywt.idwt2((lr_A[:,:,1],(output[:,:,3],output[:,:,4],output[:,:,5])), wavelet='haar')*255
             Idwt_B = pywt.idwt2((lr_A[:,:,2],(output[:,:,6],output[:,:,7],output[:,:,8])), wavelet='haar')*255
