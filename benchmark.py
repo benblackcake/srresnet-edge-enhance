@@ -60,7 +60,12 @@ class Benchmark:
         # psnr = 10*np.log10(255*255/mse)
         # return psnr
 
-        return compare_psnr(gt, pred, data_range=255)
+        return tf_psnr(gt, pred, data_range=255)
+
+    def tf_psnr(self, gt, pred, data_range):
+        psnr = tf.image.psnr(gt, pred, max_val=data_range)
+
+        return tf.Session().run(psnr)
 
     def SSIM(self, gt, pred):
         ssim = compare_ssim(gt, pred, data_range=255, gaussian_weights=True)
