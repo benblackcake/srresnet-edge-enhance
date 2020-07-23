@@ -6,7 +6,8 @@ from skimage.measure import compare_ssim
 from skimage.color import rgb2ycbcr, rgb2yuv
 
 from skimage.measure import compare_psnr
-from utils import preprocess, downsample, sobel_oper, modcrop, cany_oper, sobel_direct_oper, batch_Idwt, batch_dwt,dwt_shape, up_sample,up_sample_batch
+from utils import preprocess, downsample, sobel_oper, modcrop, cany_oper, sobel_direct_oper,\
+ batch_Idwt, batch_dwt,dwt_shape, up_sample,up_sample_batch,psnr,calculate_psnr
 
 import tensorflow as tf
 import pywt
@@ -49,7 +50,7 @@ class Benchmark:
         # Get luminance
         lum = rgb2ycbcr(image)[:, :, 0]
         # Crop off 4 border pixels
-        lum = lum[2:lum.shape[0] - 2, 2:lum.shape[1] - 2]
+        lum = lum[4:lum.shape[0] - 4, 4:lum.shape[1] - 4]
         # lum = lum.astype(np.float64)
         return lum
 
@@ -60,12 +61,15 @@ class Benchmark:
         # psnr = 10*np.log10(255*255/mse)
         # return psnr
 
-        return tf_psnr(gt, pred, data_range=255)
+        return calculate_psnr(gt, pred)
 
-    def tf_psnr(self, gt, pred, data_range):
-        psnr = tf.image.psnr(gt, pred, max_val=data_range)
+    # def tf_psnr(self, gt, pred, data_range):
+    #     psnr = tf.image.psnr(gt, pred, max_val=data_range)
 
-        return tf.Session().run(psnr)
+    #     return tf.Session().run(psnr)
+
+
+
 
     def SSIM(self, gt, pred):
         ssim = compare_ssim(gt, pred, data_range=255, gaussian_weights=True)

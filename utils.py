@@ -409,3 +409,27 @@ def tf_idwt(y,  wave='haar'):
         outputs = outputs[:, s: 2 * (out_size - 1) + np.shape(ll)[0] - s, s: 2 * (out_size - 1) + np.shape(ll)[0] - s,
                   :]
     return outputs
+
+
+def log10(x):
+    numerator = tf.log(x)
+    denominator = tf.log(tf.constant(10, dtype=numerator.dtype))
+    return numerator / denominator
+
+
+def psnr(im1, im2):
+    img_arr1 = np.array(im1).astype('float32')
+    img_arr2 = np.array(im2).astype('float32')
+    mse = tf.reduce_mean(tf.squared_difference(img_arr1, img_arr2))
+    psnr = tf.constant(255**2, dtype=tf.float32)/mse
+    result = tf.constant(10, dtype=tf.float32)*log10(psnr)
+    with tf.Session():
+        result = result.eval()
+    return result
+
+def calculate_psnr(img1, img2, max_value=255):
+    """"Calculating peak signal-to-noise ratio (PSNR) between two images."""
+    mse = np.mean((np.array(img1, dtype=np.float32) - np.array(img2, dtype=np.float32)) ** 2)
+    if mse == 0:
+        return 100
+    return 20 * np.log10(max_value / (np.sqrt(mse)))
