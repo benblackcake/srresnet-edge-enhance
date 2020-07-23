@@ -49,7 +49,7 @@ class Benchmark:
         # Get luminance
         lum = rgb2ycbcr(image)[:, :, 0]
         # Crop off 4 border pixels
-        lum = lum[4:lum.shape[0] - 4, 4:lum.shape[1] - 4]
+        lum = lum[2:lum.shape[0] - 2, 2:lum.shape[1] - 2]
         # lum = lum.astype(np.float64)
         return lum
 
