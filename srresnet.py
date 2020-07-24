@@ -106,7 +106,7 @@ class Srresnet:
         return tf.concat(rdb_concat, axis=3) 
 
 
-    def forward(self, x):
+    def forward(self, x, lr_A):
         '''
         Args:
             x: Input tensor include 3 direction sobel edge [batch_size, img_h, img_w, 3]
@@ -154,8 +154,17 @@ class Srresnet:
 
             # x_conv_out = x_conv_out + input_x
             print(x_conv_out)
+            tf_dwt_debug_RA = tf.expand_dims(lr_A[:,:,:,0], axis=-1)
+            tf_dwt_debug_GA = tf.expand_dims(lr_A[:,:,:,1], axis=-1)
+            tf_dwt_debug_BA = tf.expand_dims(lr_A[:,:,:,2], axis=-1)
+
+            y_RA_pred = tf.concat([tf_dwt_debug_RA,x_conv_out[:,:,:,0:3]], axis=-1)
+            y_GA_pred = tf.concat([tf_dwt_debug_GA,x_conv_out[:,:,:,3:6]], axis=-1)
+            y_BA_pred = tf.concat([tf_dwt_debug_BA,x_conv_out[:,:,:,6:9]], axis=-1)
+
+            y_idwt_pred = tf_idwt(tf.concat([y_RA_pred, y_GA_pred, y_BA_pred], axis=-1))
             # print(x_BCD_out)
-            return x_conv_out
+            return x_conv_out, y_idwt_pred
 
     def _content_loss(self, y_A, y_A_pred):
 
@@ -202,3 +211,67 @@ class Srresnet:
         with tf.control_dependencies(update_ops):
             return tf.train.AdamOptimizer(self.learning_rate).minimize(loss, var_list=tf.get_collection(
                 tf.GraphKeys.TRAINABLE_VARIABLES, scope='srresnet_edge'))
+
+
+class SRGanDiscriminator:
+    """
+    SRGAN Discriminator Model from Ledig et. al. 2017
+
+    """
+
+    def __init__(self, training, learning_rate=1e-4, image_size=96):
+        self.graph_created = False
+        self.learning_rate = learning_rate
+        self.training = training
+        self.image_size = image_size
+
+    def ConvolutionBlock(self, x, kernel_size, filters, strides):
+        """Conv2D + BN + LeakyReLU"""
+        x = tf.layers.conv2d(x, kernel_size=kernel_size, filters=filters, strides=strides, padding='same',
+                             use_bias=False)
+        x = tf.layers.batch_normalization(x, training=self.training)
+        x = tf.contrib.keras.layers.LeakyReLU(alpha=0.2)(x)
+        return x
+
+    def forward(self, x):
+        """Builds the forward pass network graph"""
+        with tf.variable_scope('discriminator') as scope:
+            # Reuse variables when graph is applied again
+            if self.graph_created:
+                scope.reuse_variables()
+            self.graph_created = True
+
+            # Image dimensions are fixed to the training size because of the FC layer
+            x.set_shape([None, self.image_size, self.image_size, 3])
+
+            x = tf.layers.conv2d(x, kernel_size=3, filters=64, strides=1, padding='same')
+            x = tf.contrib.keras.layers.LeakyReLU(alpha=0.2)(x)
+
+            x = self.ConvolutionBlock(x, 3, 64, 2)
+            x = self.ConvolutionBlock(x, 3, 128, 1)
+            x = self.ConvolutionBlock(x, 3, 128, 2)
+            x = self.ConvolutionBlock(x, 3, 256, 1)
+            x = self.ConvolutionBlock(x, 3, 256, 2)
+            x = self.ConvolutionBlock(x, 3, 512, 1)
+            x = self.ConvolutionBlock(x, 3, 512, 2)
+
+            x = tf.contrib.layers.flatten(x)
+            x = tf.layers.dense(x, 1024)
+            x = tf.contrib.keras.layers.LeakyReLU(alpha=0.2)(x)
+            logits = tf.layers.dense(x, 1)
+            x = tf.sigmoid(logits)
+            return x, logits
+
+    def loss_function(self, y_real_pred, y_fake_pred, y_real_pred_logits, y_fake_pred_logits):
+        """Discriminator wants to maximize log(y_real) + log(1-y_fake)."""
+        loss_real = tf.reduce_mean(
+            tf.losses.sigmoid_cross_entropy(tf.ones_like(y_real_pred_logits), y_real_pred_logits))
+        loss_fake = tf.reduce_mean(
+            tf.losses.sigmoid_cross_entropy(tf.zeros_like(y_fake_pred_logits), y_fake_pred_logits))
+        return loss_real + loss_fake
+
+    def optimize(self, loss):
+        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope='discriminator')
+        with tf.control_dependencies(update_ops):
+            return tf.train.AdamOptimizer(self.learning_rate).minimize(loss, var_list=tf.get_collection(
+                tf.GraphKeys.TRAINABLE_VARIABLES, scope='discriminator'))

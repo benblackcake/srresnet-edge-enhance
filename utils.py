@@ -161,8 +161,8 @@ def evaluate_model(loss_function, get_batch, sess, num_images, batch_size):
 
         batch_hr = batch_bgr2rgb(get_batch)
         batch_dwt_lr = batch_dwt(batch_hr)
-        batch_dwt_lr_A = np.stack([batch_dwt_lr[:,:,:,0], batch_dwt_lr[:,:,:,4], batch_dwt_lr[:,:,:,8]], axis=-1)
-        batch_dwt_lr_A = batch_dwt(batch_dwt_lr_A)
+        batch_dwt_A = np.stack([batch_dwt_lr[:,:,:,0], batch_dwt_lr[:,:,:,4], batch_dwt_lr[:,:,:,8]], axis=-1)
+        batch_dwt_lr_A = batch_dwt(batch_dwt_A)
 
         batch_hr_BCD = np.concatenate([batch_dwt_lr[:,:,:,1:4], batch_dwt_lr[:,:,:,5:8], batch_dwt_lr[:,:,:,9:12]], axis=-1)
         batch_lr_BCD = np.concatenate([up_sample_batch(batch_dwt_lr_A[:,:,:,1:4], factor=2), up_sample_batch(batch_dwt_lr_A[:,:,:,5:8], factor=2), up_sample_batch(batch_dwt_lr_A[:,:,:,9:12], factor=2)], axis=-1)
@@ -211,7 +211,7 @@ def evaluate_model(loss_function, get_batch, sess, num_images, batch_size):
 
         loss += sess.run(loss_function,
                          feed_dict={'srresnet_training:0': False,\
-                                    # 'LR_DWT_A:0': batch_lr_A,\
+                                    'LR_DWT_A:0': batch_dwt_A,\
                                     'LR_DWT_edge:0': batch_lr_BCD,\
                                     # 'HR_DWT_A:0': batch_hr_A,\
                                     'HR_DWT_edge:0': batch_hr_BCD,\

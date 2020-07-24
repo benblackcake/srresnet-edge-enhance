@@ -136,17 +136,17 @@ class Benchmark:
         pred = []
         for i, hr in enumerate(self.images_hr):
             # feed images 1 by 1 because they have different sizes
-            lr_dwt = batch_dwt(hr[np.newaxis])
-            lr_A = np.stack([lr_dwt[:,:,:,0], lr_dwt[:,:,:,4], lr_dwt[:,:,:,8]], axis=-1)
+            # lr_dwt = batch_dwt(hr[np.newaxis])
+            # lr_A = np.stack([lr_dwt[:,:,:,0], lr_dwt[:,:,:,4], lr_dwt[:,:,:,8]], axis=-1)
 
-            # hr_dwt_A_rgb = np.stack([hr_dwt[:,:,:,0], hr_dwt[:,:,:,4], hr_dwt[:,:,:,8]], axis=-1)
+            # # hr_dwt_A_rgb = np.stack([hr_dwt[:,:,:,0], hr_dwt[:,:,:,4], hr_dwt[:,:,:,8]], axis=-1)
 
-            # lr_A_rgb = np.stack([hr_dwt[:,:,:,0], hr_dwt[:,:,:,4], hr_dwt[:,:,:,8]], axis=-1)
-            lr_dwt_A = batch_dwt(lr_A)
-            lr_dwt_A_BCD = np.concatenate([up_sample_batch(lr_dwt_A[:,:,:,1:4], factor=2),\
-                                           up_sample_batch(lr_dwt_A[:,:,:,5:8], factor=2),\
-                                           up_sample_batch(lr_dwt_A[:,:,:,9:12], factor=2)], axis=-1)
-            lr_dwt_A_BCD /= 255.
+            # # lr_A_rgb = np.stack([hr_dwt[:,:,:,0], hr_dwt[:,:,:,4], hr_dwt[:,:,:,8]], axis=-1)
+            # lr_dwt_A = batch_dwt(lr_A)
+            # lr_dwt_A_BCD = np.concatenate([up_sample_batch(lr_dwt_A[:,:,:,1:4], factor=2),\
+            #                                up_sample_batch(lr_dwt_A[:,:,:,5:8], factor=2),\
+            #                                up_sample_batch(lr_dwt_A[:,:,:,9:12], factor=2)], axis=-1)
+            # lr_dwt_A_BCD /= 255.
             # lr_dwt_A_BCD = up_sample_batch(lr_dwt_A_BCD, factor=2)
 
             # lr_rgb = cv2.cvtColor(lr, cv2.COLOR_BGR2RGB)
@@ -191,12 +191,35 @@ class Benchmark:
             # cv2.imshow('__DEBUG__', lr_sobeled_train[:,:,0])
             # cv2.waitKey(0)
 
+            x = hr[np.newaxis]
+            for _ in range(2):
+                lr_dwt = batch_dwt(x)
+                lr_A = np.stack([lr_dwt[:,:,:,0], lr_dwt[:,:,:,4], lr_dwt[:,:,:,8]], axis=-1)
+                lr_dwt_A = batch_dwt(lr_A)
+                lr_dwt_A_BCD = np.concatenate([up_sample_batch(lr_dwt_A[:,:,:,1:4], factor=2),\
+                                               up_sample_batch(lr_dwt_A[:,:,:,5:8], factor=2),\
+                                               up_sample_batch(lr_dwt_A[:,:,:,9:12], factor=2)], axis=-1)
+                lr_dwt_A_BCD /= 255.
+                x = lr_dwt_A_BCD
+                output, pred_img = sess.run(sr_pred, feed_dict={'srresnet_training:0': False,\
+                                        # 'LR_DWT_A:0': lr_A,\
+                                        'LR_DWT_edge:0': x,\
+                                        # 'LR_edge:0': lr_edge[np.newaxis]
+                                        })
+                lr_A = np.squeeze(lr_A, axis=0)/255.
+                output = np.squeeze(output, axis=0)
 
-            output = sess.run(sr_pred, feed_dict={'srresnet_training:0': False,\
-                                                # 'LR_DWT_A:0': lr_A,\
-                                                'LR_DWT_edge:0': lr_dwt_A_BCD,\
-                                                # 'LR_edge:0': lr_edge[np.newaxis]
-                                                })
+                Idwt_R = pywt.idwt2((lr_A[:,:,0],(output[:,:,0],output[:,:,1],output[:,:,2])), wavelet='haar')*255
+                Idwt_G = pywt.idwt2((lr_A[:,:,1],(output[:,:,3],output[:,:,4],output[:,:,5])), wavelet='haar')*255
+                Idwt_B = pywt.idwt2((lr_A[:,:,2],(output[:,:,6],output[:,:,7],output[:,:,8])), wavelet='haar')*255
+
+                result = np.clip(np.abs(cv2.merge([Idwt_R, Idwt_G, Idwt_B])),0,255).astype(np.uint8) 
+                x = result
+            # output, pred_img = sess.run(sr_pred, feed_dict={'srresnet_training:0': False,\
+            #                                     'LR_DWT_A:0': lr_A,\
+            #                                     'LR_DWT_edge:0': lr_dwt_A_BCD,\
+            #                                     # 'LR_edge:0': lr_edge[np.newaxis]
+            #                                     })
             # print('__DEBUG__ Benchmark evaluate', output.shape)
             # print('___debug___')
             # print(output_A[:,:,:,0].shape)
@@ -214,14 +237,14 @@ class Benchmark:
             # print('__DEBUG__output_shape',output.shape)
             # print('__DEBUG__lr_A_shape',lr_A.shape)
 
-            lr_A = np.squeeze(lr_A, axis=0)/255.
-            output = np.squeeze(output, axis=0)
+            # lr_A = np.squeeze(lr_A, axis=0)/255.
+            # output = np.squeeze(output, axis=0)
 
-            Idwt_R = pywt.idwt2((lr_A[:,:,0],(output[:,:,0],output[:,:,1],output[:,:,2])), wavelet='haar')*255
-            Idwt_G = pywt.idwt2((lr_A[:,:,1],(output[:,:,3],output[:,:,4],output[:,:,5])), wavelet='haar')*255
-            Idwt_B = pywt.idwt2((lr_A[:,:,2],(output[:,:,6],output[:,:,7],output[:,:,8])), wavelet='haar')*255
+            # Idwt_R = pywt.idwt2((lr_A[:,:,0],(output[:,:,0],output[:,:,1],output[:,:,2])), wavelet='haar')*255
+            # Idwt_G = pywt.idwt2((lr_A[:,:,1],(output[:,:,3],output[:,:,4],output[:,:,5])), wavelet='haar')*255
+            # Idwt_B = pywt.idwt2((lr_A[:,:,2],(output[:,:,6],output[:,:,7],output[:,:,8])), wavelet='haar')*255
 
-            result = np.clip(np.abs(cv2.merge([Idwt_R, Idwt_G, Idwt_B])),0,255).astype(np.uint8) 
+            # result = np.clip(np.abs(cv2.merge([Idwt_R, Idwt_G, Idwt_B])),0,255).astype(np.uint8) 
 
 
             # output = output *255.
@@ -274,7 +297,7 @@ class Benchmark:
             lr[np.newaxis].shape=(1,128,128,3)
             '''
             # deprocess output
-            pred.append(result)
+            pred.append(x)
         # save images
         if log_path:
             self.save_images(pred, log_path, iteration)
