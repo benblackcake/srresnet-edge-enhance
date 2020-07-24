@@ -261,8 +261,8 @@ def main():
                     # concat_sobel = np.concatenate([sobeled_batch_y_lr, sobeled_batch_cr_lr, sobeled_batch_cb_lr], axis=-1)
 
                     _, err = sess.run([sr_opt,sr_loss],\
-                         feed_dict={srresnet_training: False,\
-                                    lr_A: batch_dwt_A,\
+                         feed_dict={srresnet_training: True,\
+                                    # lr_A: batch_lr_A,\
                                     lr_dwt_edge: batch_lr_BCD,\
                                     # hr_A: batch_hr_A,\
                                     hr_dwt_edge: batch_hr_BCD,\
