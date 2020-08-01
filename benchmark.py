@@ -6,7 +6,7 @@ from skimage.measure import compare_ssim
 from skimage.color import rgb2ycbcr, rgb2yuv
 
 from skimage.measure import compare_psnr
-from utils import preprocess, downsample, sobel_oper, modcrop, cany_oper, sobel_direct_oper,\
+from utils import preprocess, downsample, sobel_oper, modcrop, dwt_shape, cany_oper, sobel_direct_oper,\
  batch_Idwt, batch_dwt,dwt_shape, up_sample,up_sample_batch,psnr,calculate_psnr
 
 import tensorflow as tf
@@ -38,7 +38,7 @@ class Benchmark:
         """Given a list of file names, return a list of images"""
         out = []
         for image in images:
-            out.append(modcrop(cv2.cvtColor(cv2.imread(image), cv2.COLOR_BGR2RGB).astype(np.uint8)))
+            out.append(dwt_shape(cv2.cvtColor(cv2.imread(image), cv2.COLOR_BGR2RGB).astype(np.uint8)))
         return out
 
     def deprocess(self, image):
@@ -191,21 +191,68 @@ class Benchmark:
             # cv2.imshow('__DEBUG__', lr_sobeled_train[:,:,0])
             # cv2.waitKey(0)
 
-            x = hr[np.newaxis]
-            for _ in range(2):
-                lr_dwt = batch_dwt(x)
-                lr_A = np.stack([lr_dwt[:,:,:,0], lr_dwt[:,:,:,4], lr_dwt[:,:,:,8]], axis=-1)
+            x = hr
+            lr_dwt_level_1 = batch_dwt(x[np.newaxis])
+            lr_A_level_1 = np.stack([lr_dwt_level_1[:,:,:,0], lr_dwt_level_1[:,:,:,4], lr_dwt_level_1[:,:,:,8]], axis=-1)
+
+            # lr_A_level_1 /= np.abs(lr_A_level_1).max()
+            # lr_A_level_1 *= 255.
+
+            # lr_A_level_1[:,:,:,0] /= np.abs(lr_A_level_1[:,:,:,0]).max()
+            # lr_A_level_1[:,:,:,1] /= np.abs(lr_A_level_1[:,:,:,1]).max()
+            # lr_A_level_1[:,:,:,2] /= np.abs(lr_A_level_1[:,:,:,2]).max()
+
+            # lr_A_level_1[:,:,:,0] *= 255.
+            # lr_A_level_1[:,:,:,1] *= 255.
+            # lr_A_level_1[:,:,:,2] *= 255.
+
+            lr_dwt_level_2 = batch_dwt(lr_A_level_1)
+
+            # lr_dwt_level_2[:,:,:,0] /= np.abs(lr_dwt_level_2[:,:,:,0]).max()*255.
+            # lr_dwt_level_2[:,:,:,4] /= np.abs(lr_dwt_level_2[:,:,:,4]).max()*255.
+            # lr_dwt_level_2[:,:,:,8] /= np.abs(lr_dwt_level_2[:,:,:,8]).max()*255.
+
+            lr_A = np.stack([lr_dwt_level_2[:,:,:,0], lr_dwt_level_2[:,:,:,4], lr_dwt_level_2[:,:,:,8]], axis=-1)
+
+            # lr_A[:,:,:,0] /= np.abs(lr_A[:,:,:,0]).max()
+            # lr_A[:,:,:,1] /= np.abs(lr_A[:,:,:,1]).max()
+            # lr_A[:,:,:,2] /= np.abs(lr_A[:,:,:,2]).max()
+
+            # lr_A[:,:,:,0] *= 255.
+            # lr_A[:,:,:,1] *= 255.
+            # lr_A[:,:,:,2] *= 255.
+            # lr_A = cv2.merge([lr_dwt_level_2[:,:,:,0], lr_dwt_level_2[:,:,:,4], lr_dwt_level_2[:,:,:,8]])
+            # lr_A /= np.abs(lr_A).max()
+            # lr_A *= 255.
+
+            for i in range(2):
+                # sess.run(tf.local_variables_initializer())
+                # sess.run(tf.global_variables_initializer())
+                print('doing...%d'%i)
+                # cv2.imshow('__DEBUG__x',  x)
+                print(lr_A.shape)
+                # lr_dwt = batch_dwt(x[np.newaxis])
+                # lr_A = np.stack([lr_dwt[:,:,:,0], lr_dwt[:,:,:,4], lr_dwt[:,:,:,8]], axis=-1)
+                # cv2.imshow('Approximate', lr_A[0,:,:,:].astype('uint8'))
+                # cv2.waitKey(0)
+                # lr_A /= np.abs(lr_A).max()
+                # lr_A *= 255.
                 lr_dwt_A = batch_dwt(lr_A)
+
                 lr_dwt_A_BCD = np.concatenate([up_sample_batch(lr_dwt_A[:,:,:,1:4], factor=2),\
                                                up_sample_batch(lr_dwt_A[:,:,:,5:8], factor=2),\
                                                up_sample_batch(lr_dwt_A[:,:,:,9:12], factor=2)], axis=-1)
                 lr_dwt_A_BCD /= 255.
-                x = lr_dwt_A_BCD
-                output, pred_img = sess.run(sr_pred, feed_dict={'srresnet_training:0': False,\
+                # x = lr_dwt_A_BCD
+                output = sess.run(sr_pred, feed_dict={'srresnet_training:0': False,\
                                         # 'LR_DWT_A:0': lr_A,\
-                                        'LR_DWT_edge:0': x,\
+                                        'LR_DWT_edge:0': lr_dwt_A_BCD,\
                                         # 'LR_edge:0': lr_edge[np.newaxis]
                                         })
+
+
+                # lr_A /= np.abs(lr_A).max()
+                # lr_A *= 255.
                 lr_A = np.squeeze(lr_A, axis=0)/255.
                 output = np.squeeze(output, axis=0)
 
@@ -213,8 +260,42 @@ class Benchmark:
                 Idwt_G = pywt.idwt2((lr_A[:,:,1],(output[:,:,3],output[:,:,4],output[:,:,5])), wavelet='haar')*255
                 Idwt_B = pywt.idwt2((lr_A[:,:,2],(output[:,:,6],output[:,:,7],output[:,:,8])), wavelet='haar')*255
 
-                result = np.clip(np.abs(cv2.merge([Idwt_R, Idwt_G, Idwt_B])),0,255).astype(np.uint8) 
-                x = result
+                Idwt_R *= 255.0/Idwt_R.max()
+                Idwt_G *= 255.0/Idwt_G.max()
+                Idwt_B *= 255.0/Idwt_B.max()
+
+                # Idwt_R /= np.abs(Idwt_R).max()
+                # Idwt_G /= np.abs(Idwt_G).max()
+                # Idwt_B /= np.abs(Idwt_B).max()
+
+                # Idwt_R *= 255.
+                # Idwt_G *= 255.
+                # Idwt_B *= 255.
+
+                # result /= np.abs(result).max()
+                # result *= 255.
+                # result = cv2.merge([Idwt_R, Idwt_G, Idwt_B])
+                # result = np.clip(np.abs(cv2.merge([Idwt_R, Idwt_G, Idwt_B])),0,255)
+                result = np.clip((cv2.merge([Idwt_R, Idwt_G, Idwt_B])),0,255)
+                # result /= np.abs(result).max()
+                # result *= 255.
+                # result = np.clip(result, 0, 255)
+                lr_A = result[np.newaxis]
+
+                # result = result.astype('uint8')
+                # cv2.imshow('__DEBUG__',  result)
+                # cv2.waitKey(0)
+                # lr_A = np.stack([Idwt_R, Idwt_G, Idwt_B], axis=-1)[np.newaxis]
+                # lr_A[:,:,:,0] /= np.abs(lr_A[:,:,:,0]).max()
+                # lr_A[:,:,:,1] /= np.abs(lr_A[:,:,:,1]).max()
+                # lr_A[:,:,:,2] /= np.abs(lr_A[:,:,:,2]).max()
+
+                # lr_A[:,:,:,0] *= 255.
+                # lr_A[:,:,:,1] *= 255.
+                # lr_A[:,:,:,2] *= 255.
+                # # lr_A /= np.abs(lr_A).max()
+                # # lr_A *= 255
+                # lr_A = result[np.newaxis]
             # output, pred_img = sess.run(sr_pred, feed_dict={'srresnet_training:0': False,\
             #                                     'LR_DWT_A:0': lr_A,\
             #                                     'LR_DWT_edge:0': lr_dwt_A_BCD,\
@@ -297,7 +378,7 @@ class Benchmark:
             lr[np.newaxis].shape=(1,128,128,3)
             '''
             # deprocess output
-            pred.append(x)
+            pred.append(result.astype('uint8'))
         # save images
         if log_path:
             self.save_images(pred, log_path, iteration)

@@ -161,7 +161,18 @@ def evaluate_model(loss_function, get_batch, sess, num_images, batch_size):
 
         batch_hr = batch_bgr2rgb(get_batch)
         batch_dwt_lr = batch_dwt(batch_hr)
+
+
         batch_dwt_A = np.stack([batch_dwt_lr[:,:,:,0], batch_dwt_lr[:,:,:,4], batch_dwt_lr[:,:,:,8]], axis=-1)
+
+        # batch_dwt_A[:,:,:,0] /= np.abs(batch_dwt_A[:,:,:,0]).max()
+        # batch_dwt_A[:,:,:,1] /= np.abs(batch_dwt_A[:,:,:,1]).max()
+        # batch_dwt_A[:,:,:,2] /= np.abs(batch_dwt_A[:,:,:,2]).max()
+
+        # batch_dwt_A[:,:,:,0] *= 255.
+        # batch_dwt_A[:,:,:,1] *= 255.
+        # batch_dwt_A[:,:,:,2] *= 255.
+
         batch_dwt_lr_A = batch_dwt(batch_dwt_A)
 
         batch_hr_BCD = np.concatenate([batch_dwt_lr[:,:,:,1:4], batch_dwt_lr[:,:,:,5:8], batch_dwt_lr[:,:,:,9:12]], axis=-1)
@@ -262,6 +273,16 @@ def modcrop(img, scale =4):
 
 
 def batch_dwt(batch):
+    '''
+    Args:
+        batch: Input batch RGB image [batch_size, img_h, img_w, 3]
+    Returns:
+        dwt_batch: Batch  DWT result [batch_size, img_h, img_w, 12]
+    '''
+    # print(len(batch.shape))
+    assert (len(batch.shape) == 4 ),"Input batch Shape error"
+    assert (batch.shape[3] == 3 ),"Color channel error"
+
     dwt_batch = np.zeros([batch.shape[0], batch.shape[1]//2, batch.shape[2]//2, 12])
 
     for i in range(batch.shape[0]):

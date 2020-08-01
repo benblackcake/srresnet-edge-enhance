@@ -158,7 +158,7 @@ def main():
                         # Evaluate benchmarks
                         log_line = ''
                         for benchmark in benchmarks:
-                            psnr, ssim, _, _ = benchmark.evaluate(sess, sr_pred, log_path, iteration)
+                            psnr, ssim, _, _ = benchmark.evaluate(sess, sr_BCD_pred, log_path, iteration)
                         # #     # benchmark.evaluate(sess, sr_pred, log_path, iteration)
                             print(' [%s] PSNR: %.2f, SSIM: %.4f' % (benchmark.name, psnr, ssim), end='')
                             log_line += ',%.7f, %.7f' % (psnr, ssim)
@@ -176,7 +176,21 @@ def main():
                     # ycbcr_batch = batch_bgr2ycbcr(batch_hr)
                     batch_hr = batch_bgr2rgb(batch_hr)
                     batch_dwt_lr = batch_dwt(batch_hr)
+
+                    # batch_dwt_lr[:,:,:,0] /= np.abs(batch_dwt_lr[:,:,:,0]).max()*255.
+                    # batch_dwt_lr[:,:,:,4] /= np.abs(batch_dwt_lr[:,:,:,4]).max()*255.
+                    # batch_dwt_lr[:,:,:,8] /= np.abs(batch_dwt_lr[:,:,:,8]).max()*255.
+
                     batch_dwt_A = np.stack([batch_dwt_lr[:,:,:,0], batch_dwt_lr[:,:,:,4], batch_dwt_lr[:,:,:,8]], axis=-1)
+
+                    # batch_dwt_A[:,:,:,0] /= np.abs(batch_dwt_A[:,:,:,0]).max()
+                    # batch_dwt_A[:,:,:,1] /= np.abs(batch_dwt_A[:,:,:,1]).max()
+                    # batch_dwt_A[:,:,:,2] /= np.abs(batch_dwt_A[:,:,:,2]).max()
+
+                    # batch_dwt_A[:,:,:,0] *= 255.
+                    # batch_dwt_A[:,:,:,1] *= 255.
+                    # batch_dwt_A[:,:,:,2] *= 255.
+
                     batch_dwt_lr_A = batch_dwt(batch_dwt_A)
 
                     batch_hr_BCD = np.concatenate([batch_dwt_lr[:,:,:,1:4], batch_dwt_lr[:,:,:,5:8], batch_dwt_lr[:,:,:,9:12]], axis=-1)
