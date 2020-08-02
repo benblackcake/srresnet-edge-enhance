@@ -160,71 +160,28 @@ def evaluate_model(loss_function, get_batch, sess, num_images, batch_size):
     for i in range(int(math.ceil(num_images / batch_size))):
 
         batch_hr = batch_bgr2rgb(get_batch)
-        batch_dwt_lr = batch_dwt(batch_hr)
+        batch_lr = downsample_batch(batch_hr, factor=4)
 
+        batch_dwt_hr = batch_Swt(batch_hr)
+        batch_dwt_lr = batch_Swt(batch_lr)
 
-        batch_dwt_A = np.stack([batch_dwt_lr[:,:,:,0], batch_dwt_lr[:,:,:,4], batch_dwt_lr[:,:,:,8]], axis=-1)
+        batch_dwt_hr_A = np.stack([batch_dwt_hr[:,:,:,0], batch_dwt_hr[:,:,:,4], batch_dwt_hr[:,:,:,8]], axis=-1)
+        batch_dwt_lr_A = np.stack([batch_dwt_lr[:,:,:,0], batch_dwt_lr[:,:,:,4], batch_dwt_lr[:,:,:,8]], axis=-1)
 
-        # batch_dwt_A[:,:,:,0] /= np.abs(batch_dwt_A[:,:,:,0]).max()
-        # batch_dwt_A[:,:,:,1] /= np.abs(batch_dwt_A[:,:,:,1]).max()
-        # batch_dwt_A[:,:,:,2] /= np.abs(batch_dwt_A[:,:,:,2]).max()
+        batch_dwt_hr_A /= 255.
+        batch_dwt_lr_A /= 255.
 
-        # batch_dwt_A[:,:,:,0] *= 255.
-        # batch_dwt_A[:,:,:,1] *= 255.
-        # batch_dwt_A[:,:,:,2] *= 255.
-
-        batch_dwt_lr_A = batch_dwt(batch_dwt_A)
-
-        batch_hr_BCD = np.concatenate([batch_dwt_lr[:,:,:,1:4], batch_dwt_lr[:,:,:,5:8], batch_dwt_lr[:,:,:,9:12]], axis=-1)
-        batch_lr_BCD = np.concatenate([up_sample_batch(batch_dwt_lr_A[:,:,:,1:4], factor=2), up_sample_batch(batch_dwt_lr_A[:,:,:,5:8], factor=2), up_sample_batch(batch_dwt_lr_A[:,:,:,9:12], factor=2)], axis=-1)
-        # batch_lr = downsample_batch(batch_hr, factor=4)
-        # batch_lr_BCD = up_sample_batch(batch_lr_BCD, factor=2)
+        batch_hr_BCD = np.concatenate([batch_dwt_hr[:,:,:,1:4], batch_dwt_hr[:,:,:,5:8], batch_dwt_hr[:,:,:,9:12]], axis=-1)
+        batch_lr_BCD = np.concatenate([batch_dwt_lr[:,:,:,1:4], batch_dwt_lr[:,:,:,5:8], batch_dwt_lr[:,:,:,9:12]], axis=-1)
 
         batch_hr_BCD = batch_hr_BCD/255.
         batch_lr_BCD = batch_lr_BCD/255.
-        # print('__DEBUG__hr_BCD',batch_hr_BCD.shape)
-        # print('__DEBUG__lr_BCD',batch_lr_BCD.shape)
-
-        # batch_hr_A = np.stack([batch_dwt_hr[:,:,:,0], batch_dwt_hr[:,:,:,4], batch_dwt_hr[:,:,:,8]], axis=-1)
-        # batch_lr_A = np.stack([batch_dwt_lr[:,:,:,0], batch_dwt_lr[:,:,:,4], batch_dwt_lr[:,:,:,8]], axis=-1)
-        # # print(batch_dwt_hr[:,:,:,1:4].shape)
-        # batch_hr_BCD = np.concatenate([batch_dwt_hr[:,:,:,1:4], batch_dwt_hr[:,:,:,5:8], batch_dwt_hr[:,:,:,9:12]], axis=-1)
-        # batch_lr_BCD = np.concatenate([batch_dwt_lr[:,:,:,1:4], batch_dwt_lr[:,:,:,5:8], batch_dwt_lr[:,:,:,9:12]], axis=-1)
-        # print(batch_hr_BCD.shape)
-
-        # print('debug shape')
-        # print(batch_hr_A.shape)
-        # print(batch_lr_A.shape)
-        # print(batch_hr_BCD.shape)
-        # print(batch_lr_BCD.shape)
-
-        # batch_hr = batch_bgr2rgb(get_batch)
-        # dwt_rgb = batch_dwt(batch_hr)
-        # dwt_rgb = np.clip(np.abs(dwt_rgb), 0, 255).astype('uint8')
-        # dwt_r_BCD = dwt_rgb[:,:,:,1:4]
-        # dwt_g_BCD = dwt_rgb[:,:,:,5:8]
-        # dwt_b_BCD = dwt_rgb[:,:,:,9:12]
-
-        # dwt_label = np.concatenate([dwt_r_BCD, dwt_g_BCD, dwt_b_BCD], axis=-1)/255.
-        # dwt_label = dwt_rgb
-
-        # sobeled_batch_r = sobel_direct_oper_batch(dwt_rgb[:,:,:,0])
-        # sobeled_batch_g = sobel_direct_oper_batch(dwt_rgb[:,:,:,4])
-        # sobeled_batch_b = sobel_direct_oper_batch(dwt_rgb[:,:,:,8])
-
-        # sobeled_batch_r = np.concatenate([sobeled_batch_r,np.expand_dims(dwt_rgb[:,:,:,0], axis=-1)],axis=-1)
-        # sobeled_batch_g = np.concatenate([sobeled_batch_g,np.expand_dims(dwt_rgb[:,:,:,4], axis=-1)],axis=-1)
-        # sobeled_batch_b = np.concatenate([sobeled_batch_b,np.expand_dims(dwt_rgb[:,:,:,8], axis=-1)],axis=-1)
-
-        # sobeled_train = np.concatenate([sobeled_batch_r,sobeled_batch_g,sobeled_batch_b],axis=-1)/255. # Normalized
-
-
-
+        
         loss += sess.run(loss_function,
                          feed_dict={'srresnet_training:0': False,\
-                                    'LR_DWT_A:0': batch_dwt_A,\
+                                    'LR_DWT_A:0': batch_dwt_lr_A,\
                                     'LR_DWT_edge:0': batch_lr_BCD,\
-                                    # 'HR_DWT_A:0': batch_hr_A,\
+                                    'HR_image:0': batch_dwt_hr_A,\
                                     'HR_DWT_edge:0': batch_hr_BCD,\
                                     })
         total += 1
@@ -300,6 +257,37 @@ def batch_dwt(batch):
         dwt_batch[i,:,:,:] = coeffs
         # print(coeffs.shape)
     return dwt_batch
+
+def batch_Swt(batch):
+    '''
+    Args:
+        batch: Input batch RGB image [batch_size, img_h, img_w, 3]
+    Returns:
+        dwt_batch: Batch  DWT result [batch_size, img_h, img_w, 12]
+    '''
+    # print(len(batch.shape))
+    assert (len(batch.shape) == 4 ),"Input batch Shape error"
+    assert (batch.shape[3] == 3 ),"Color channel error"
+
+    Swt_batch = np.zeros([batch.shape[0], batch.shape[1], batch.shape[2], 12])
+
+    for i in range(batch.shape[0]):
+        LL_r, (LH_r, HL_r, HH_r) = pywt.swt2(batch[i,:,:,0], 'haar', level=1)[0]
+        # pywt.swt2(batch[i,:,:,0], 'haar', level=1)[0]
+        coeffs_R = np.stack([LL_r,LH_r, HL_r, HH_r], axis=-1)
+
+        LL_g, (LH_g, HL_g, HH_g) = pywt.swt2(batch[i,:,:,1], 'haar', level=1)[0]
+        coeffs_G = np.stack([LL_g,LH_g, HL_g, HH_g], axis=-1)
+
+        LL_b, (LH_b, HL_b, HH_b) = pywt.swt2(batch[i,:,:,2], 'haar', level=1)[0]
+        coeffs_B = np.stack([LL_b,LH_b, HL_b, HH_b], axis=-1)
+
+        coeffs = np.concatenate([coeffs_R, coeffs_G, coeffs_B], axis=-1)
+
+        Swt_batch[i,:,:,:] = coeffs
+        # print(coeffs.shape)
+    return Swt_batch
+
 
 def batch_Idwt(batch):
     '''

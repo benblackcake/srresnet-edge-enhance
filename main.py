@@ -8,7 +8,7 @@ from tqdm import tqdm,trange
 import matplotlib.pyplot as plt
 import srresnet
 from utils import (downsample_batch,build_log_dir,preprocess,evaluate_model,batch_bgr2ycbcr,batch_bgr2rgb,batch_dwt,up_sample_batch,
-                   get_data_set, sobel_oper_batch, cany_oper_batch, sobel_direct_oper_batch)
+                   get_data_set, sobel_oper_batch, cany_oper_batch, sobel_direct_oper_batch, batch_Swt)
 import numpy as np
 import pywt
 import cv2
@@ -53,12 +53,14 @@ def main():
 
     lr_A = tf.placeholder(tf.float32, [None, None, None, 3], name='LR_DWT_A')
     lr_dwt_edge = tf.placeholder(tf.float32, [None, None, None, 9], name='LR_DWT_edge')
-    hr = tf.placeholder(tf.float32, [None, None, None, 3], name='HR_image')
+    hr_A = tf.placeholder(tf.float32, [None, None, None, 3], name='HR_image')
     hr_dwt_edge = tf.placeholder(tf.float32, [None, None, None, 9], name='HR_DWT_edge')
 
 
-    sr_BCD_pred, sr_out_pred = srresnet_model.forward(lr_dwt_edge, lr_A)
-    sr_loss = srresnet_model.loss_function(hr_dwt_edge, sr_BCD_pred)
+    sr_out_pred = srresnet_model.forward(lr_A)
+    sr_BCD_pred = srresnet_model.forward_edge_branch(lr_dwt_edge)
+
+    sr_loss = srresnet_model.loss_function(hr_A, sr_out_pred, hr_dwt_edge, sr_BCD_pred)
     sr_opt = srresnet_model.optimize(sr_loss)
 
     benchmarks = [
@@ -158,7 +160,7 @@ def main():
                         # Evaluate benchmarks
                         log_line = ''
                         for benchmark in benchmarks:
-                            psnr, ssim, _, _ = benchmark.evaluate(sess, sr_BCD_pred, log_path, iteration)
+                            psnr, ssim, _, _ = benchmark.evaluate(sess, sr_out_pred, sr_BCD_pred, log_path, iteration)
                         # #     # benchmark.evaluate(sess, sr_pred, log_path, iteration)
                             print(' [%s] PSNR: %.2f, SSIM: %.4f' % (benchmark.name, psnr, ssim), end='')
                             log_line += ',%.7f, %.7f' % (psnr, ssim)
@@ -175,14 +177,19 @@ def main():
 
                     # ycbcr_batch = batch_bgr2ycbcr(batch_hr)
                     batch_hr = batch_bgr2rgb(batch_hr)
-                    batch_dwt_lr = batch_dwt(batch_hr)
+                    batch_lr = downsample_batch(batch_hr, factor=4)
+
+                    batch_dwt_hr = batch_Swt(batch_hr)
+                    batch_dwt_lr = batch_Swt(batch_lr)
 
                     # batch_dwt_lr[:,:,:,0] /= np.abs(batch_dwt_lr[:,:,:,0]).max()*255.
                     # batch_dwt_lr[:,:,:,4] /= np.abs(batch_dwt_lr[:,:,:,4]).max()*255.
                     # batch_dwt_lr[:,:,:,8] /= np.abs(batch_dwt_lr[:,:,:,8]).max()*255.
+                    batch_dwt_hr_A = np.stack([batch_dwt_hr[:,:,:,0], batch_dwt_hr[:,:,:,4], batch_dwt_hr[:,:,:,8]], axis=-1)
+                    batch_dwt_lr_A = np.stack([batch_dwt_lr[:,:,:,0], batch_dwt_lr[:,:,:,4], batch_dwt_lr[:,:,:,8]], axis=-1)
 
-                    batch_dwt_A = np.stack([batch_dwt_lr[:,:,:,0], batch_dwt_lr[:,:,:,4], batch_dwt_lr[:,:,:,8]], axis=-1)
-
+                    batch_dwt_hr_A /= 255.
+                    batch_dwt_lr_A /= 255.
                     # batch_dwt_A[:,:,:,0] /= np.abs(batch_dwt_A[:,:,:,0]).max()
                     # batch_dwt_A[:,:,:,1] /= np.abs(batch_dwt_A[:,:,:,1]).max()
                     # batch_dwt_A[:,:,:,2] /= np.abs(batch_dwt_A[:,:,:,2]).max()
@@ -191,12 +198,13 @@ def main():
                     # batch_dwt_A[:,:,:,1] *= 255.
                     # batch_dwt_A[:,:,:,2] *= 255.
 
-                    batch_dwt_lr_A = batch_dwt(batch_dwt_A)
+                    # batch_dwt_lr_A = batch_dwt(batch_dwt_A)
 
-                    batch_hr_BCD = np.concatenate([batch_dwt_lr[:,:,:,1:4], batch_dwt_lr[:,:,:,5:8], batch_dwt_lr[:,:,:,9:12]], axis=-1)
-                    batch_lr_BCD = np.concatenate([up_sample_batch(batch_dwt_lr_A[:,:,:,1:4], factor=2),\
-                                                   up_sample_batch(batch_dwt_lr_A[:,:,:,5:8], factor=2),\
-                                                   up_sample_batch(batch_dwt_lr_A[:,:,:,9:12], factor=2)], axis=-1)
+                    batch_hr_BCD = np.concatenate([batch_dwt_hr[:,:,:,1:4], batch_dwt_hr[:,:,:,5:8], batch_dwt_hr[:,:,:,9:12]], axis=-1)
+                    batch_lr_BCD = np.concatenate([batch_dwt_lr[:,:,:,1:4], batch_dwt_lr[:,:,:,5:8], batch_dwt_lr[:,:,:,9:12]], axis=-1)
+                    # batch_lr_BCD = np.concatenate([up_sample_batch(batch_dwt_lr_A[:,:,:,1:4], factor=2),\
+                    #                                up_sample_batch(batch_dwt_lr_A[:,:,:,5:8], factor=2),\
+                    #                                up_sample_batch(batch_dwt_lr_A[:,:,:,9:12], factor=2)], axis=-1)
                     # batch_lr = downsample_batch(batch_hr, factor=4)
                     # batch_lr_BCD = up_sample_batch(batch_lr_BCD, factor=2)
 
@@ -276,9 +284,9 @@ def main():
 
                     _, err = sess.run([sr_opt,sr_loss],\
                          feed_dict={srresnet_training: True,\
-                                    # lr_A: batch_lr_A,\
+                                    lr_A: batch_dwt_lr_A,\
                                     lr_dwt_edge: batch_lr_BCD,\
-                                    # hr_A: batch_hr_A,\
+                                    hr_A: batch_dwt_hr_A,\
                                     hr_dwt_edge: batch_hr_BCD,\
 
                                     })
