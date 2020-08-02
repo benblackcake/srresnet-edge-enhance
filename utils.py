@@ -273,7 +273,6 @@ def batch_Swt(batch):
 
     for i in range(batch.shape[0]):
         (LL_r, (LH_r, HL_r, HH_r)) = pywt.swt2(batch[i,:,:,0], 'haar', level=1)[0]
-        # pywt.swt2(batch[i,:,:,0], 'haar', level=1)[0]
         coeffs_R = np.stack([LL_r,LH_r, HL_r, HH_r], axis=-1)
 
         (LL_g, (LH_g, HL_g, HH_g)) = pywt.swt2(batch[i,:,:,1], 'haar', level=1)[0]

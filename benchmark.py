@@ -136,6 +136,7 @@ class Benchmark:
         pred = []
         for i, lr in enumerate(self.images_lr):
             # feed images 1 by 1 because they have different sizes
+            
             lr_dwt = batch_Swt(lr[np.newaxis])
 
             lr_A = np.stack([lr_dwt[:,:,:,0], lr_dwt[:,:,:,4], lr_dwt[:,:,:,8]], axis=-1)
