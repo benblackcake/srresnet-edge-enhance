@@ -171,9 +171,9 @@ class Benchmark:
             sr_A = np.squeeze(sr_A, axis=0)
             sr_BCD = np.squeeze(sr_BCD, axis=0)
 
-            Idwt_R = pywt.iswt2((sr_A[:,:,0],(sr_BCD[:,:,0],sr_BCD[:,:,1],sr_BCD[:,:,2])), wavelet='haar')*255
-            Idwt_G = pywt.iswt2((sr_A[:,:,1],(sr_BCD[:,:,3],sr_BCD[:,:,4],sr_BCD[:,:,5])), wavelet='haar')*255
-            Idwt_B = pywt.iswt2((sr_A[:,:,2],(sr_BCD[:,:,6],sr_BCD[:,:,7],sr_BCD[:,:,8])), wavelet='haar')*255
+            Idwt_R = pywt.iswt2([sr_A[:,:,0],(sr_BCD[:,:,0],sr_BCD[:,:,1],sr_BCD[:,:,2])], wavelet='haar')*255
+            Idwt_G = pywt.iswt2([sr_A[:,:,1],(sr_BCD[:,:,3],sr_BCD[:,:,4],sr_BCD[:,:,5])], wavelet='haar')*255
+            Idwt_B = pywt.iswt2([sr_A[:,:,2],(sr_BCD[:,:,6],sr_BCD[:,:,7],sr_BCD[:,:,8])], wavelet='haar')*255
 
             # Idwt_R = pywt.idwt2((lr_A[:,:,0],(output[:,:,0],output[:,:,1],output[:,:,2])), wavelet='haar')*255
             # Idwt_G = pywt.idwt2((lr_A[:,:,1],(output[:,:,3],output[:,:,4],output[:,:,5])), wavelet='haar')*255
