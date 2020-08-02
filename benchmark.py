@@ -38,7 +38,7 @@ class Benchmark:
         """Given a list of file names, return a list of images"""
         out = []
         for image in images:
-            out.append(modcrop(cv2.cvtColor(cv2.imread(image), cv2.COLOR_BGR2RGB).astype(np.uint8)))
+            out.append(dwt_shape(cv2.cvtColor(cv2.imread(image), cv2.COLOR_BGR2RGB).astype(np.uint8)))
         return out
 
     def deprocess(self, image):
@@ -136,6 +136,7 @@ class Benchmark:
         pred = []
         for i, lr in enumerate(self.images_lr):
             # feed images 1 by 1 because they have different sizes
+            print(lr[np.newaxis].shape)
             lr_dwt = batch_Swt(lr[np.newaxis])
 
             lr_A = np.stack([lr_dwt[:,:,:,0], lr_dwt[:,:,:,4], lr_dwt[:,:,:,8]], axis=-1)
@@ -149,6 +150,7 @@ class Benchmark:
                                                 'LR_DWT_edge:0': lr_dwt_A_BCD,\
                                                 # 'LR_edge:0': lr_edge[np.newaxis]
                                                 })
+
             # print('__DEBUG__ Benchmark evaluate', output.shape)
             # print('___debug___')
             # print(output_A[:,:,:,0].shape)
@@ -181,6 +183,7 @@ class Benchmark:
 
             result = np.clip(np.abs(cv2.merge([Idwt_R, Idwt_G, Idwt_B])),0,255).astype(np.uint8) 
 
+            print('__SUCESS__')
 
             # output = output *255.
 
