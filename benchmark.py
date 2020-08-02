@@ -168,6 +168,8 @@ class Benchmark:
 
             # lr_A = np.squeeze(lr_A, axis=0)/255.
             # output = np.squeeze(output, axis=0)
+            sr_A = np.squeeze(sr_A, axis=0)
+            sr_BCD = np.squeeze(sr_BCD, axis=0)
 
             Idwt_R = pywt.iswt2((sr_A[:,:,0],(sr_BCD[:,:,0],sr_BCD[:,:,1],sr_BCD[:,:,2])), wavelet='haar')*255
             Idwt_G = pywt.iswt2((sr_A[:,:,1],(sr_BCD[:,:,3],sr_BCD[:,:,4],sr_BCD[:,:,5])), wavelet='haar')*255
