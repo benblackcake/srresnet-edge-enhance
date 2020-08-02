@@ -176,7 +176,7 @@ def evaluate_model(loss_function, get_batch, sess, num_images, batch_size):
 
         batch_hr_BCD = batch_hr_BCD/255.
         batch_lr_BCD = batch_lr_BCD/255.
-        
+
         loss += sess.run(loss_function,
                          feed_dict={'srresnet_training:0': False,\
                                     'LR_DWT_A:0': batch_dwt_lr_A,\
@@ -272,14 +272,14 @@ def batch_Swt(batch):
     Swt_batch = np.zeros([batch.shape[0], batch.shape[1], batch.shape[2], 12])
 
     for i in range(batch.shape[0]):
-        LL_r, (LH_r, HL_r, HH_r) = pywt.swt2(batch[i,:,:,0], 'haar', level=1)[0]
+        (LL_r, (LH_r, HL_r, HH_r)) = pywt.swt2(batch[i,:,:,0], 'haar', level=1)[0]
         # pywt.swt2(batch[i,:,:,0], 'haar', level=1)[0]
         coeffs_R = np.stack([LL_r,LH_r, HL_r, HH_r], axis=-1)
 
-        LL_g, (LH_g, HL_g, HH_g) = pywt.swt2(batch[i,:,:,1], 'haar', level=1)[0]
+        (LL_g, (LH_g, HL_g, HH_g)) = pywt.swt2(batch[i,:,:,1], 'haar', level=1)[0]
         coeffs_G = np.stack([LL_g,LH_g, HL_g, HH_g], axis=-1)
 
-        LL_b, (LH_b, HL_b, HH_b) = pywt.swt2(batch[i,:,:,2], 'haar', level=1)[0]
+        (LL_b, (LH_b, HL_b, HH_b)) = pywt.swt2(batch[i,:,:,2], 'haar', level=1)[0]
         coeffs_B = np.stack([LL_b,LH_b, HL_b, HH_b], axis=-1)
 
         coeffs = np.concatenate([coeffs_R, coeffs_G, coeffs_B], axis=-1)
