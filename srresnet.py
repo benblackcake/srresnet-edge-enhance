@@ -187,6 +187,7 @@ class Srresnet:
             }
             self._weightsR, self._biasesR = self.RDBParams()
             x_BCD = tf.nn.conv2d(x_BCD, weights['w_RDB_in'], strides=[1,1,1,1], padding='SAME')
+            x_skip = x_BCD
 
             x_BCD = self.RDBs(x_BCD)
 
@@ -194,6 +195,8 @@ class Srresnet:
 
             x_BCD = tf.nn.conv2d(x_BCD, weights['w_RDB_1'], strides=[1,1,1,1], padding='SAME')
             x_BCD =  tf.contrib.keras.layers.PReLU(shared_axes=[1, 2])(x_BCD)
+
+            x_BCD = tf.add(x_skip,x_BCD)
             for i in range(self.num_upsamples):
                 x_BCD = self.Upsample2xBlock(x_BCD, kernel_size=3, in_channel=64, filter_size=256)
 
