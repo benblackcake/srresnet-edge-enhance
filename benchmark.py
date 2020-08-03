@@ -50,7 +50,7 @@ class Benchmark:
         # Get luminance
         lum = rgb2ycbcr(image)[:, :, 0]
         # Crop off 4 border pixels
-        lum = lum[4:lum.shape[0] - 4, 4:lum.shape[1] - 4]
+        lum = lum[8:lum.shape[0] - 8, 8:lum.shape[1] - 8]
         # lum = lum.astype(np.float64)
         return lum
 
@@ -112,12 +112,15 @@ class Benchmark:
             os.makedirs(os.path.split(path)[0])
         misc.toimage(image, cmin=0, cmax=255).save(path)
 
-    def save_images(self, images, log_path, iteration):
+    def save_images(self, images, edge_image, log_path, iteration):
         count = 0
-        for output, lr, hr, name in zip(images, self.images_lr, self.images_hr, self.names):
+        for output, output_edge, lr, hr, name in zip(images, edge_image, self.images_lr, self.images_hr, self.names):
             # Save output
             path = os.path.join(log_path, self.name, name, '%d_out.png' % iteration)
             self.save_image(output, path)
+            # Save output edge map
+            path = os.path.join(log_path, self.name, name, '%d_out_edge.png' % iteration)
+            self.save_image(output_edge, path)
             # Save ground truth
             path = os.path.join(log_path, self.name, name, '%d_hr.png' % iteration)
             self.save_image(hr, path)
@@ -134,6 +137,7 @@ class Benchmark:
         """Evaluate benchmark, returning the score and saving images."""
 
         pred = []
+        edge = []
         for i, lr in enumerate(self.images_lr):
             # feed images 1 by 1 because they have different sizes
             lr_dwt = batch_Swt(lr[np.newaxis])
@@ -187,7 +191,7 @@ class Benchmark:
             merge = cv2.merge([Idwt_R, Idwt_G, Idwt_B])
             merge /= np.abs(merge).max()
             merge *= 255.
-            
+
             # Idwt_R = pywt.idwt2((lr_A[:,:,0],(output[:,:,0],output[:,:,1],output[:,:,2])), wavelet='haar')*255
             # Idwt_G = pywt.idwt2((lr_A[:,:,1],(output[:,:,3],output[:,:,4],output[:,:,5])), wavelet='haar')*255
             # Idwt_B = pywt.idwt2((lr_A[:,:,2],(output[:,:,6],output[:,:,7],output[:,:,8])), wavelet='haar')*255
@@ -221,8 +225,10 @@ class Benchmark:
             # print(result.shape)
             # cv2.imshow('__DEBUG__', np.clip(np.abs(np.squeeze(output_BCD[:,:,:,0])),0,255).astype(np.uint8))
             # cv2.waitKey(0)
+            LH = np.abs(sr_BCD[:,:,0])
 
-            # cv2.imshow('__DEBUG__', output[:,:,1])
+            LH *=255.
+            # cv2.imshow('__DEBUG__', LH.astype('uint8'))
             # cv2.waitKey(0)
 
             # cv2.imshow('__DEBUG__', output[:,:,2])
@@ -247,9 +253,10 @@ class Benchmark:
             '''
             # deprocess output
             pred.append(result.astype('uint8'))
+            edge.append(LH.astype('uint8'))
         # save images
         if log_path:
-            self.save_images(pred, log_path, iteration)
+            self.save_images(pred, edge, log_path, iteration)
         return self.test_images(self.images_hr, pred)
     
     
