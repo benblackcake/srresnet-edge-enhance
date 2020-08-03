@@ -220,7 +220,7 @@ class Srresnet:
                     'b3': tf.Variable(tf.zeros([9], name='b3'))
                 }
                 conv1 = tf.nn.relu(tf.nn.conv2d(x_BCD, weights['w1'], strides=[1,1,1,1], padding='VALID') + biases['b1'])
-                conv2 = tf.nn.relu(tf.nn.conv2d(conv1, weights['w2'], strides=[1,1,1,1], padding='VALID') biases['b2'])
+                conv2 = tf.nn.relu(tf.nn.conv2d(conv1, weights['w2'], strides=[1,1,1,1], padding='VALID') + biases['b2'])
                 conv3 = tf.nn.conv2d(conv2, weights['w3'], strides=[1,1,1,1], padding='VALID') + biases['b3'] # This layer don't need ReLU
 
                 return conv3
