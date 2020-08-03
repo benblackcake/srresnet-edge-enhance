@@ -223,7 +223,8 @@ class Srresnet:
                 conv2 = tf.nn.relu(tf.nn.conv2d(conv1, weights['w2'], strides=[1,1,1,1], padding='VALID') biases['b2'])
                 conv3 = tf.nn.conv2d(conv2, weights['w3'], strides=[1,1,1,1], padding='VALID') + biases['b3'] # This layer don't need ReLU
 
-
+                return conv3
+                
     def _content_loss(self, y_A, y_A_pred, y_BCD, y_BCD_pred):
 
         # tf_dwt_debug = tf_dwt(y_A_pred)
