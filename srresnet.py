@@ -186,22 +186,30 @@ class Srresnet:
                     'w_RDB_out': tf.Variable(tf.random_normal([9, 9, 64, 9], stddev=1e-2), name='w_resnet_in'),
 
                 }
+
+                biases = {
+                    'b1': tf.Variable(tf.zeros([64], name='b1')),
+                    'b2': tf.Variable(tf.zeros([64], name='b2')),
+                    'b3': tf.Variable(tf.zeros([9], name='b3'))
+                }
+
+
                 self._weightsR, self._biasesR = self.RDBParams()
-                x_BCD = tf.nn.conv2d(x_BCD, weights['w_RDB_in'], strides=[1,1,1,1], padding='SAME')
+                x_BCD = tf.nn.conv2d(x_BCD, weights['w_RDB_in'], strides=[1,1,1,1], padding='SAME') + biases['b1']
                 x_skip = x_BCD
 
                 x_BCD = self.RDBs(x_BCD)
 
                 print('__RDB__out',x_BCD)
 
-                x_BCD = tf.nn.conv2d(x_BCD, weights['w_RDB_1'], strides=[1,1,1,1], padding='SAME')
+                x_BCD = tf.nn.conv2d(x_BCD, weights['w_RDB_1'], strides=[1,1,1,1], padding='SAME') + biases['b2']
                 x_BCD =  tf.contrib.keras.layers.PReLU(shared_axes=[1, 2])(x_BCD)
 
                 x_BCD = tf.add(x_skip,x_BCD)
                 for i in range(self.num_upsamples):
                     x_BCD = self.Upsample2xBlock(x_BCD, kernel_size=3, in_channel=64, filter_size=256)
 
-                x_BCD_out = tf.nn.conv2d(x_BCD, weights['w_RDB_out'], strides=[1,1,1,1], padding='SAME')
+                x_BCD_out = tf.nn.conv2d(x_BCD, weights['w_RDB_out'], strides=[1,1,1,1], padding='SAME') + biases['b3']
 
                 return x_BCD_out
 
@@ -227,7 +235,7 @@ class Srresnet:
                 for i in range(self.num_upsamples):
                     conv3 = self.Upsample2xBlock(conv3, kernel_size=3, in_channel=16, filter_size=64)
                 conv3 = tf.nn.conv2d(conv3, weights['w_out'], strides=[1,1,1,1], padding='VALID') + biases['b3'] # This layer don't need ReLU
-                
+
                 return conv3
                 
     def _content_loss(self, y_A, y_A_pred, y_BCD, y_BCD_pred):
