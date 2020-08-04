@@ -58,7 +58,7 @@ def main():
 
 
     sr_out_pred = srresnet_model.forward(lr_A)
-    sr_BCD_pred = srresnet_model.forward_edge_branch(lr_dwt_edge, net='srcnn')
+    sr_BCD_pred = srresnet_model.forward_edge_branch(lr_dwt_edge)
 
     sr_loss = srresnet_model.loss_function(hr_A, sr_out_pred, hr_dwt_edge, sr_BCD_pred)
     sr_opt = srresnet_model.optimize(sr_loss)
