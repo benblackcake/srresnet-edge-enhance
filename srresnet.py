@@ -211,23 +211,24 @@ class Srresnet:
                 weights = {
                     'w1': tf.Variable(tf.random_normal([9, 9, 9, 64], stddev=1e-3), name='w1'),
                     'w2': tf.Variable(tf.random_normal([1, 1, 64, 32], stddev=1e-3), name='w2'),
-                    'w3': tf.Variable(tf.random_normal([5, 5, 32, 16], stddev=1e-3), name='w3')
-                    'w_out': tf.Variable(tf.random_normal([9, 9, 16, 9], stddev=1e-2), name='w_resnet_in'),
+                    'w3': tf.Variable(tf.random_normal([5, 5, 32, 16], stddev=1e-3), name='w3'),
+                    'w_out': tf.Variable(tf.random_normal([9, 9, 16, 9], stddev=1e-2), name='w_out'),
 
                 }
 
                 biases = {
                     'b1': tf.Variable(tf.zeros([64], name='b1')),
                     'b2': tf.Variable(tf.zeros([32], name='b2')),
-                    'b3': tf.Variable(tf.zeros([9], name='b3'))
+                    'b3': tf.Variable(tf.zeros([16], name='b3'))
                 }
-                conv1 = tf.nn.relu(tf.nn.conv2d(x_BCD, weights['w1'], strides=[1,1,1,1], padding='VALID') + biases['b1'])
-                conv2 = tf.nn.relu(tf.nn.conv2d(conv1, weights['w2'], strides=[1,1,1,1], padding='VALID') + biases['b2'])
-                conv3 = tf.nn.conv2d(conv2, weights['w3'], strides=[1,1,1,1], padding='VALID') + biases['b3'] # This layer don't need ReLU
+                conv1 = tf.nn.relu(tf.nn.conv2d(x_BCD, weights['w1'], strides=[1,1,1,1], padding='SAME') + biases['b1'])
+                conv2 = tf.nn.relu(tf.nn.conv2d(conv1, weights['w2'], strides=[1,1,1,1], padding='SAME') + biases['b2'])
+                conv3 = tf.nn.conv2d(conv2, weights['w3'], strides=[1,1,1,1], padding='SAME') + biases['b3'] # This layer don't need ReLU
                 for i in range(self.num_upsamples):
                     conv3 = self.Upsample2xBlock(conv3, kernel_size=3, in_channel=16, filter_size=64)
-                conv3 = tf.nn.conv2d(conv3, weights['w_out'], strides=[1,1,1,1], padding='VALID') + biases['b3'] # This layer don't need ReLU
+                conv3 = tf.nn.conv2d(conv3, weights['w_out'], strides=[1,1,1,1], padding='SAME') # This layer don't need ReLU
                 
+                print('__DEBUG__',conv3)
                 return conv3
                 
     def _content_loss(self, y_A, y_A_pred, y_BCD, y_BCD_pred):
