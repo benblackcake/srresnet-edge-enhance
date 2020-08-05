@@ -106,7 +106,7 @@ class Srresnet:
         return tf.concat(rdb_concat, axis=3) 
 
 
-    def forward(self, x):
+    def forward_edge_branch(self, x):
         '''
 
         Args:
@@ -118,9 +118,9 @@ class Srresnet:
             # x = tf.concat([x, x_edge],axis=3, name='x_input_concate')
             input_x = x
             weights = {
-                'w_resnet_in': tf.Variable(tf.random_normal([9, 9, 3, 64], stddev=1e-2), name='w_resnet_in'),
+                'w_resnet_in': tf.Variable(tf.random_normal([9, 9, 9, 64], stddev=1e-2), name='w_resnet_in'),
                 'w_resnet_1': tf.Variable(tf.random_normal([3, 3, 64, 64], stddev=1e-2), name='w_resnet_1'),
-                'w_resnet_out': tf.Variable(tf.random_normal([9, 9, 64, 3], stddev=1e-2), name='w_resnet_out'),
+                'w_resnet_out': tf.Variable(tf.random_normal([9, 9, 64, 9], stddev=1e-2), name='w_resnet_out'),
                 # 'w_RDB_in': tf.Variable(tf.random_normal([9, 9, 9, 64], stddev=1e-3), name='w_resnet_in'),
                 # 'w_RDB_1': tf.Variable(tf.random_normal([9, 9, 192, 64], stddev=1e-3), name='w_resnet_in'),
                 # 'w_RDB_out': tf.Variable(tf.random_normal([9, 9, 64, 9], stddev=1e-3), name='w_resnet_in'),
@@ -170,7 +170,7 @@ class Srresnet:
             return x_conv_out
 
 
-    def forward_edge_branch(self, x_BCD, net='RDN'):
+    def forward_LL_branch(self, x_BCD, net='RDN'):
         '''
         Args:
             x_BCD: input SWT(LH,HL,HH) 
@@ -181,16 +181,16 @@ class Srresnet:
                     # 'w_resnet_in': tf.Variable(tf.random_normal([9, 9, 9, 64], stddev=1e-3), name='w_resnet_in'),
                     # 'w_resnet_1': tf.Variable(tf.random_normal([3, 3, 64, 64], stddev=1e-3), name='w_resnet_1'),
                     # 'w_resnet_out': tf.Variable(tf.random_normal([9, 9, 64, 9], stddev=1e-3), name='w_resnet_out'),
-                    'w_RDB_in': tf.Variable(tf.random_normal([9, 9, 9, 64], stddev=1e-2), name='w_resnet_in'),
+                    'w_RDB_in': tf.Variable(tf.random_normal([9, 9, 3, 64], stddev=1e-2), name='w_resnet_in'),
                     'w_RDB_1': tf.Variable(tf.random_normal([9, 9, 1024, 64], stddev=1e-2), name='w_resnet_in'),
-                    'w_RDB_out': tf.Variable(tf.random_normal([9, 9, 64, 9], stddev=1e-2), name='w_resnet_in'),
+                    'w_RDB_out': tf.Variable(tf.random_normal([9, 9, 64, 3], stddev=1e-2), name='w_resnet_in'),
 
                 }
 
                 biases = {
                     'b1': tf.Variable(tf.zeros([64], name='b1')),
                     'b2': tf.Variable(tf.zeros([64], name='b2')),
-                    'b3': tf.Variable(tf.zeros([9], name='b3'))
+                    'b3': tf.Variable(tf.zeros([3], name='b3'))
                 }
 
 
@@ -234,7 +234,7 @@ class Srresnet:
                 conv3 = tf.nn.conv2d(conv2, weights['w3'], strides=[1,1,1,1], padding='SAME') + biases['b3'] # This layer don't need ReLU
                 for i in range(self.num_upsamples):
                     conv3 = self.Upsample2xBlock(conv3, kernel_size=3, in_channel=16, filter_size=64)
-                    
+
                 conv3 = tf.nn.conv2d(conv3, weights['w_out'], strides=[1,1,1,1], padding='SAME') + biases['b3'] # This layer don't need ReLU
 
                 return conv3

@@ -57,7 +57,7 @@ def main():
     hr_dwt_edge = tf.placeholder(tf.float32, [None, None, None, 9], name='HR_DWT_edge')
 
 
-    sr_out_pred = srresnet_model.forward(lr_A)
+    sr_out_pred = srresnet_model.forward_LL_branch(lr_A)
     sr_BCD_pred = srresnet_model.forward_edge_branch(lr_dwt_edge)
 
     sr_loss = srresnet_model.loss_function(hr_A, sr_out_pred, hr_dwt_edge, sr_BCD_pred)
@@ -210,77 +210,6 @@ def main():
 
                     batch_hr_BCD = batch_hr_BCD/255.
                     batch_lr_BCD = batch_lr_BCD/255.
-                    # batch_lr = up_sample_batch(batch_lr, factor=2)
-
-                    # batch_dwt_hr = batch_dwt(batch_hr)/255.
-                    # batch_dwt_lr = batch_dwt(batch_lr)/255.
-
-                    # batch_hr_A = np.stack([batch_dwt_hr[:,:,:,0], batch_dwt_hr[:,:,:,4], batch_dwt_hr[:,:,:,8]], axis=-1)
-                    # batch_lr_A = np.stack([batch_dwt_lr[:,:,:,0], batch_dwt_lr[:,:,:,4], batch_dwt_lr[:,:,:,8]], axis=-1)
-
-                    # batch_hr_BCD = np.concatenate([batch_dwt_hr[:,:,:,1:4], batch_dwt_hr[:,:,:,5:8], batch_dwt_hr[:,:,:,9:12]], axis=-1)
-                    # batch_lr_BCD = np.concatenate([batch_dwt_lr[:,:,:,1:4], batch_dwt_lr[:,:,:,5:8], batch_dwt_lr[:,:,:,9:12]], axis=-1)
-
-                    # batch_hr_y = np.expand_dims(ycbcr_batch[:,:,:,0], axis=-1) #Get batch Y channel image
-                    # batch_hr_cr = np.expand_dims(ycbcr_batch[:,:,:,1], axis=-1) #Get batch cr channel image
-                    # batch_hr_cb = np.expand_dims(ycbcr_batch[:,:,:,2], axis=-1) #Get batch cb channel image
-
-                    # dwt_y_channel = tf_dwt(np.float32(batch_hr_y/255.), in_size=[16,96,96,1])
-
-                    # dwt_rgb = sess.run(tf_dwt(np.float32(batch_hr/255.)))
-                    # dwt_rgb = batch_dwt(batch_hr)
-                    # dwt_rgb = np.clip(np.abs(dwt_rgb), 0, 255).astype('uint8')
-                    # dwt_r_BCD = dwt_rgb[:,:,:,0:4]
-                    # dwt_g_BCD = dwt_rgb[:,:,:,4:8]
-                    # dwt_b_BCD = dwt_rgb[:,:,:,8:12]
-
-                    # dwt_label = np.concatenate([dwt_r_BCD, dwt_g_BCD, dwt_b_BCD], axis=-1)/255.
-                    # dwt_label = dwt_rgb
-
-                    # sobeled_batch_r = sobel_direct_oper_batch(dwt_rgb[:,:,:,0])
-                    # sobeled_batch_g = sobel_direct_oper_batch(dwt_rgb[:,:,:,4])
-                    # sobeled_batch_b = sobel_direct_oper_batch(dwt_rgb[:,:,:,8])
-
-                    # sobeled_batch_r = np.concatenate([sobeled_batch_r,np.expand_dims(dwt_rgb[:,:,:,0], axis=-1)],axis=-1)
-                    # sobeled_batch_g = np.concatenate([sobeled_batch_g,np.expand_dims(dwt_rgb[:,:,:,4], axis=-1)],axis=-1)
-                    # sobeled_batch_b = np.concatenate([sobeled_batch_b,np.expand_dims(dwt_rgb[:,:,:,8], axis=-1)],axis=-1)
-
-                    # sobeled_train = np.concatenate([sobeled_batch_r,sobeled_batch_g,sobeled_batch_b],axis=-1)/255. # Normalized
-
-                    # dwt_cr_channel = tf_dwt(np.float32(batch_hr_cr/255.), in_size=[16,96,96,1])
-                    # dwt_cb_channel = tf_dwt(np.float32(batch_hr_cb/255.), in_size=[16,96,96,1])
-                    
-                    # A_y_prime = tf.expand_dims(dwt_y_channel[:,:,:,0], axis=-1).eval()*255.
-
-                    # B_y_prime = tf.expand_dims(dwt_y_channel[:,:,:,1], axis=-1)
-                    # C_y_prime = tf.expand_dims(dwt_y_channel[:,:,:,2], axis=-1)
-                    # D_y_prime = tf.expand_dims(dwt_y_channel[:,:,:,3], axis=-1)
-
-                    # A_cr_prime = tf.expand_dims(dwt_cr_channel[:,:,:,0], axis=-1).eval()*255.
-                    # B_cr_prime = tf.expand_dims(dwt_cr_channel[:,:,:,1], axis=-1)
-                    # C_cr_prime = tf.expand_dims(dwt_cr_channel[:,:,:,2], axis=-1)
-                    # D_cr_prime = tf.expand_dims(dwt_cr_channel[:,:,:,3], axis=-1)
-
-                    # A_cb_prime = tf.expand_dims(dwt_cb_channel[:,:,:,0], axis=-1).eval()*255.
-                    # B_cb_prime = tf.expand_dims(dwt_cb_channel[:,:,:,1], axis=-1)
-                    # C_cb_prime = tf.expand_dims(dwt_cb_channel[:,:,:,2], axis=-1)
-                    # D_cb_prime = tf.expand_dims(dwt_cb_channel[:,:,:,3], axis=-1)
-
-                    # A_y_prime = np.clip(np.abs(A_y_prime),0,255).astype(np.uint8)
-                    # A_cr_prime = np.clip(np.abs(A_cr_prime),0,255).astype(np.uint8)
-                    # A_cb_prime = np.clip(np.abs(A_cb_prime),0,255).astype(np.uint8)
-
-                    # concat_y_BCD = tf.concat([B_y_prime,C_y_prime,D_y_prime], axis=-1)
-                    # concat_cr_BCD = tf.concat([B_cr_prime,C_cr_prime,D_cr_prime], axis=-1)
-                    # concat_cb_BCD = tf.concat([B_cb_prime,C_cb_prime,D_cb_prime], axis=-1)
-
-                    # concat_dwt_hr = tf.concat([concat_y_BCD, concat_cr_BCD, concat_cb_BCD], axis=-1).eval()
-
-                    # sobeled_batch_y_lr = sobel_direct_oper_batch(A_y_prime)/255.
-                    # sobeled_batch_cr_lr = sobel_direct_oper_batch(A_cr_prime)/255.
-                    # sobeled_batch_cb_lr = sobel_direct_oper_batch(A_cb_prime)/255.
-
-                    # concat_sobel = np.concatenate([sobeled_batch_y_lr, sobeled_batch_cr_lr, sobeled_batch_cb_lr], axis=-1)
 
                     _, err = sess.run([sr_opt,sr_loss],\
                          feed_dict={srresnet_training: True,\
