@@ -288,6 +288,30 @@ def batch_Swt(batch):
     return Swt_batch
 
 
+def batch_ISwt(batch):
+    '''
+    Args:
+        batch: Tensor of batch [16,h,w,12]
+    Returns:
+        Idwt_batch: Tensor of Inverse wavelet transform [16,h*2,w*2,3]
+    '''
+
+    swt_batch = np.zeros([batch.shape[0], batch.shape[1], batch.shape[2], 3])
+
+    for i in range(batch.shape[0]):
+        Iswt_R = pywt.iswt2((batch[i,:,:,0],(batch[i,:,:,1],batch[i,:,:,2],batch[i,:,:,3])), wavelet='haar')
+        Iswt_G = pywt.iswt2((batch[i,:,:,4],(batch[i,:,:,5],batch[i,:,:,6],batch[i,:,:,7])), wavelet='haar')
+        Iswt_B = pywt.iswt2((batch[i,:,:,8],(batch[i,:,:,9],batch[i,:,:,10],batch[i,:,:,11])), wavelet='haar')
+
+        coeffs = cv2.merge([Idwt_R, Idwt_G, Idwt_B])
+        swt_batch[i,:,:,:] = coeffs
+        # print(coeffs.shape)
+    return swt_batch
+
+def tf_batch_ISwt(batch):
+    tf.numpy_function(batch_ISwt, [batch], tf.uint8)
+
+
 def batch_Idwt(batch):
     '''
     Args:
@@ -307,6 +331,7 @@ def batch_Idwt(batch):
         dwt_batch[i,:,:,:] = coeffs
         # print(coeffs.shape)
     return dwt_batch
+
 
 
 def dwt_shape(img):

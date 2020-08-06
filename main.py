@@ -56,7 +56,7 @@ def main():
     hr_A = tf.placeholder(tf.float32, [None, None, None, 3], name='HR_image')
     hr_dwt_edge = tf.placeholder(tf.float32, [None, None, None, 9], name='HR_DWT_edge')
 
-    sr_out_pred, sr_BCD_pred= srresnet_model.forward(lr_A, lr_dwt_edge)
+    sr_out_pred, sr_BCD_pred, sr_pred = srresnet_model.forward(lr_A, lr_dwt_edge)
     # sr_out_pred = srresnet_model.forward_LL_branch(lr_A)
     # sr_BCD_pred = srresnet_model.forward_edge_branch(lr_dwt_edge)
 
@@ -160,7 +160,7 @@ def main():
                         # Evaluate benchmarks
                         log_line = ''
                         for benchmark in benchmarks:
-                            psnr, ssim, _, _ = benchmark.evaluate(sess, sr_out_pred, sr_BCD_pred, log_path, iteration)
+                            psnr, ssim, _, _ = benchmark.evaluate(sess, sr_out_pred, sr_BCD_pred, sr_pred, log_path, iteration)
                         # #     # benchmark.evaluate(sess, sr_pred, log_path, iteration)
                             print(' [%s] PSNR: %.2f, SSIM: %.4f' % (benchmark.name, psnr, ssim), end='')
                             log_line += ',%.7f, %.7f' % (psnr, ssim)

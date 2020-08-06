@@ -1,6 +1,6 @@
 
 import tensorflow as tf
-from utils import tf_idwt, tf_dwt
+from utils import tf_idwt, tf_dwt, tf_batch_ISwt
 
 class Srresnet:
     """Srresnet Model"""
@@ -179,7 +179,21 @@ class Srresnet:
             x_LL = tf.nn.conv2d(x_LL, weights['w_RDB_out'], strides=[1,1,1,1], padding='SAME') + biases['b3']
             x_edge = tf.nn.conv2d(x_edge, weights['w_resnet_out'], strides=[1,1,1,1], padding='SAME', name='y_predict')
 
-            return x_LL, x_edge
+            tf_swt_debug_RA = tf.expand_dims(x_LL[:,:,:,0], axis=-1)
+            tf_swt_debug_GA = tf.expand_dims(x_LL[:,:,:,1], axis=-1)
+            tf_swt_debug_BA = tf.expand_dims(x_LL[:,:,:,2], axis=-1)
+
+            y_RA_pred = tf.concat([tf_swt_debug_RA,x_edge[:,:,:,0:3]], axis=-1)
+            y_GA_pred = tf.concat([tf_swt_debug_GA,x_edge[:,:,:,3:6]], axis=-1)
+            y_BA_pred = tf.concat([tf_swt_debug_BA,x_edge[:,:,:,6:9]], axis=-1)
+
+            y_pred = tf.concat([y_RA_pred, y_GA_pred, y_BA_pred], axis=-1)
+
+            y_pred = tf_batch_ISwt(y_pred)
+
+            return x_LL, x_edge, y_pred
+
+
     def forward_edge_branch(self, x):
         '''
 
