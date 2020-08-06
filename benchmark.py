@@ -176,10 +176,10 @@ class Benchmark:
 
             '''__DEBUG__'''
             sr = np.squeeze(sr, axis=0)
-            sr /= np.abs(sr).max()
+            # sr /= np.abs(sr).max()
             sr *= 255.
-            cv2.imshow('__DEBUG__', sr.astype('uint8'))
-            cv2.waitKey(0)
+            # cv2.imshow('__DEBUG__', sr.astype('uint8'))
+            # cv2.waitKey(0)
             ''''''
             sr_A = np.squeeze(sr_A, axis=0)
             sr_BCD = np.squeeze(sr_BCD, axis=0)
@@ -204,7 +204,7 @@ class Benchmark:
             # Idwt_G = pywt.idwt2((lr_A[:,:,1],(output[:,:,3],output[:,:,4],output[:,:,5])), wavelet='haar')*255
             # Idwt_B = pywt.idwt2((lr_A[:,:,2],(output[:,:,6],output[:,:,7],output[:,:,8])), wavelet='haar')*255
 
-            result = np.clip(merge,0,255).astype(np.uint8) 
+            result = np.clip(sr,0,255).astype(np.uint8) 
 
             print('__SUCESS__')
 

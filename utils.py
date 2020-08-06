@@ -303,13 +303,13 @@ def batch_ISwt(batch):
         Iswt_G = pywt.iswt2((batch[i,:,:,4],(batch[i,:,:,5],batch[i,:,:,6],batch[i,:,:,7])), wavelet='haar')
         Iswt_B = pywt.iswt2((batch[i,:,:,8],(batch[i,:,:,9],batch[i,:,:,10],batch[i,:,:,11])), wavelet='haar')
 
-        coeffs = cv2.merge([Idwt_R, Idwt_G, Idwt_B])
+        coeffs = cv2.merge([Iswt_R, Iswt_G, Iswt_B])
         swt_batch[i,:,:,:] = coeffs
         # print(coeffs.shape)
     return swt_batch
 
 def tf_batch_ISwt(batch):
-    tf.numpy_function(batch_ISwt, [batch], tf.uint8)
+    return tf.numpy_function(batch_ISwt, [batch], tf.float64)
 
 
 def batch_Idwt(batch):

@@ -212,7 +212,7 @@ def main():
                     batch_lr_BCD = batch_lr_BCD/255.
 
                     _, err = sess.run([sr_opt,sr_loss],\
-                         feed_dict={srresnet_training: True,\
+                         feed_dict={srresnet_training: False,\
                                     lr_A: batch_dwt_lr_A,\
                                     lr_dwt_edge: batch_lr_BCD,\
                                     hr_A: batch_dwt_hr_A,\

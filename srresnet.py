@@ -108,8 +108,8 @@ class Srresnet:
 
     def forward_branch_bine(self, input_LL, input_edge):
         rdb_concat = list()
-        rdb_in = input_LL
-        x_edge = input_edge
+        rdb_in = input_edge
+        x_LL = input_LL
 
         D = 16
         C = 8
@@ -117,67 +117,67 @@ class Srresnet:
         # G0 = self.G0
         ks = 3
         for i in range(1, D+1):
-            x_LL = rdb_in
+            x_LL = self.ResidualBlock(x_LL, 3, 64)
+            x_edge = rdb_in
+
             for j in range(1, C+1):
-                tmp = tf.nn.conv2d(x_LL, self._weightsR['w_R_%d_%d' %(i, j)], strides=[1,1,1,1], padding='SAME') + self._biasesR['b_R_%d_%d' % (i, j)]
+                tmp = tf.nn.conv2d(x_edge, self._weightsR['w_R_%d_%d' %(i, j)], strides=[1,1,1,1], padding='SAME') + self._biasesR['b_R_%d_%d' % (i, j)]
                 tmp = tf.nn.relu(tmp)
-                x_LL = tf.concat([x_LL, tmp], axis=3)
+                x_edge = tf.concat([x_edge, tmp], axis=3)
 
-            x_LL = tf.nn.conv2d(x_LL, self._weightsR['w_R_%d_%d' % (i, C+1)], strides=[1,1,1,1], padding='SAME') +  self._biasesR['b_R_%d_%d' % (i, C+1)]
-            rdb_in = tf.add(x_LL, rdb_in)
+            x_edge = tf.nn.conv2d(x_edge, self._weightsR['w_R_%d_%d' % (i, C+1)], strides=[1,1,1,1], padding='SAME') +  self._biasesR['b_R_%d_%d' % (i, C+1)]
 
-            x_edge = tf.add(rdb_in, x_edge)
-            x_edge = self.ResidualBlock(x_edge, 3, 64)
+            rdb_in = tf.add(x_edge, rdb_in)
+            rdb_in = tf.add(rdb_in, x_LL)
+
             rdb_concat.append(rdb_in)
-            edge_branch_out = tf.concat(rdb_concat, axis=3)
 
-
-        return tf.concat(rdb_concat, axis=3), x_edge
+        return tf.concat(rdb_concat, axis=3), x_LL
 
 
     def forward(self,x_LL, x_edge):
         with tf.variable_scope('forward_branch',reuse=tf.AUTO_REUSE) as scope:
             weights = {
-                'w_resnet_in': tf.Variable(tf.random_normal([9, 9, 9, 64], stddev=1e-2), name='w_resnet_in'),
+                'w_resnet_in': tf.Variable(tf.random_normal([9, 9, 3, 64], stddev=1e-2), name='w_resnet_in'),
                 'w_resnet_1': tf.Variable(tf.random_normal([3, 3, 64, 64], stddev=1e-2), name='w_resnet_1'),
-                'w_resnet_out': tf.Variable(tf.random_normal([9, 9, 64, 9], stddev=1e-2), name='w_resnet_out'),
-                'w_RDB_in': tf.Variable(tf.random_normal([9, 9, 3, 64], stddev=1e-2), name='w_resnet_in'),
-                'w_RDB_1': tf.Variable(tf.random_normal([9, 9, 1024, 64], stddev=1e-2), name='w_resnet_in'),
-                'w_RDB_out': tf.Variable(tf.random_normal([9, 9, 64, 3], stddev=1e-2), name='w_resnet_in'),
+                'w_resnet_out': tf.Variable(tf.random_normal([9, 9, 64, 3], stddev=1e-2), name='w_resnet_out'),
+                'w_RDB_in': tf.Variable(tf.random_normal([3, 3, 9, 64], stddev=1e-2), name='w_resnet_in'),
+                'w_RDB_1': tf.Variable(tf.random_normal([3, 3, 1024, 64], stddev=1e-2), name='w_resnet_in'),
+                'w_RDB_out': tf.Variable(tf.random_normal([3, 3, 64, 9], stddev=1e-2), name='w_resnet_in'),
 
             }
             biases = {
                 'b1': tf.Variable(tf.zeros([64], name='b1')),
                 'b2': tf.Variable(tf.zeros([64], name='b2')),
-                'b3': tf.Variable(tf.zeros([3], name='b3')),
+                'b3': tf.Variable(tf.zeros([9], name='b3')),
                 }
 
             self._weightsR, self._biasesR = self.RDBParams()
 
-            x_LL = tf.nn.conv2d(x_LL, weights['w_RDB_in'], strides=[1,1,1,1], padding='SAME') + biases['b1']
-            x_LL_skip = x_LL
-
-            x_edge = tf.nn.conv2d(x_edge, weights['w_resnet_in'], strides=[1,1,1,1], padding='SAME')
-            x_edge = tf.contrib.keras.layers.PReLU(shared_axes=[1, 2])(x_edge)
+            x_edge = tf.nn.conv2d(x_edge, weights['w_RDB_in'], strides=[1,1,1,1], padding='SAME') + biases['b1']
             x_edge_skip = x_edge
 
-            x_LL, x_edge = self.forward_branch_bine(x_LL, x_edge)
+            x_LL = tf.nn.conv2d(x_LL, weights['w_resnet_in'], strides=[1,1,1,1], padding='SAME')
+            x_LL = tf.contrib.keras.layers.PReLU(shared_axes=[1, 2])(x_LL)
+            x_LL_skip = x_LL
 
-            x_LL = tf.nn.conv2d(x_LL, weights['w_RDB_1'], strides=[1,1,1,1], padding='SAME') + biases['b2']
-            x_LL =  tf.contrib.keras.layers.PReLU(shared_axes=[1, 2])(x_LL)
-            x_LL = tf.add(x_LL_skip, x_LL)
+            x_edge, x_LL = self.forward_branch_bine(x_edge, x_LL)
 
-            x_edge = tf.nn.conv2d(x_edge, weights['w_resnet_1'], strides=[1,1,1,1], padding='SAME', name='layer_1')
-            x_edge = tf.layers.batch_normalization(x_edge, training=self.training)
+            x_edge = tf.nn.conv2d(x_edge, weights['w_RDB_1'], strides=[1,1,1,1], padding='SAME') + biases['b2']
+            x_edge =  tf.contrib.keras.layers.PReLU(shared_axes=[1, 2])(x_edge)
             x_edge = tf.add(x_edge_skip, x_edge)
+
+            x_LL = tf.nn.conv2d(x_LL, weights['w_resnet_1'], strides=[1,1,1,1], padding='SAME', name='layer_1')
+            x_LL = tf.layers.batch_normalization(x_LL, training=self.training)
+            x_LL = tf.add(x_LL_skip, x_LL)
 
 
             for i in range(self.num_upsamples):
-                x_LL = self.Upsample2xBlock(x_LL, kernel_size=3, in_channel=64, filter_size=256)
                 x_edge = self.Upsample2xBlock(x_edge, kernel_size=3, in_channel=64, filter_size=256)
+                x_LL = self.Upsample2xBlock(x_LL, kernel_size=3, in_channel=64, filter_size=256)
 
-            x_LL = tf.nn.conv2d(x_LL, weights['w_RDB_out'], strides=[1,1,1,1], padding='SAME') + biases['b3']
-            x_edge = tf.nn.conv2d(x_edge, weights['w_resnet_out'], strides=[1,1,1,1], padding='SAME', name='y_predict')
+            x_edge = tf.nn.conv2d(x_edge, weights['w_RDB_out'], strides=[1,1,1,1], padding='SAME') + biases['b3']
+            x_LL = tf.nn.conv2d(x_LL, weights['w_resnet_out'], strides=[1,1,1,1], padding='SAME', name='y_predict')
 
             tf_swt_debug_RA = tf.expand_dims(x_LL[:,:,:,0], axis=-1)
             tf_swt_debug_GA = tf.expand_dims(x_LL[:,:,:,1], axis=-1)
