@@ -176,17 +176,18 @@ class Benchmark:
 
             '''__DEBUG__'''
             sr = np.squeeze(sr, axis=0)
+            sr = self.deprocess(sr)
             # sr /= np.abs(sr).max()
-            sr *= 255.
+            # sr *= 255.
             # cv2.imshow('__DEBUG__', sr.astype('uint8'))
             # cv2.waitKey(0)
             ''''''
-            sr_A = np.squeeze(sr_A, axis=0)
-            sr_BCD = np.squeeze(sr_BCD, axis=0)
+            # sr_A = np.squeeze(sr_A, axis=0)
+            # sr_BCD = np.squeeze(sr_BCD, axis=0)
 
-            Idwt_R = pywt.iswt2([sr_A[:,:,0],(sr_BCD[:,:,0],sr_BCD[:,:,1],sr_BCD[:,:,2])], wavelet='haar')
-            Idwt_G = pywt.iswt2([sr_A[:,:,1],(sr_BCD[:,:,3],sr_BCD[:,:,4],sr_BCD[:,:,5])], wavelet='haar')
-            Idwt_B = pywt.iswt2([sr_A[:,:,2],(sr_BCD[:,:,6],sr_BCD[:,:,7],sr_BCD[:,:,8])], wavelet='haar')
+            # Idwt_R = pywt.iswt2([sr_A[:,:,0],(sr_BCD[:,:,0],sr_BCD[:,:,1],sr_BCD[:,:,2])], wavelet='haar')
+            # Idwt_G = pywt.iswt2([sr_A[:,:,1],(sr_BCD[:,:,3],sr_BCD[:,:,4],sr_BCD[:,:,5])], wavelet='haar')
+            # Idwt_B = pywt.iswt2([sr_A[:,:,2],(sr_BCD[:,:,6],sr_BCD[:,:,7],sr_BCD[:,:,8])], wavelet='haar')
 
             # Idwt_R /= np.abs(Idwt_R).max()
             # Idwt_G /= np.abs(Idwt_G).max()
@@ -196,16 +197,16 @@ class Benchmark:
             # Idwt_G *= 255.
             # Idwt_B *= 255.
 
-            merge = cv2.merge([Idwt_R, Idwt_G, Idwt_B])
-            merge /= np.abs(merge).max()
-            merge *= 255.
+            # merge = cv2.merge([Idwt_R, Idwt_G, Idwt_B])
+            # merge /= np.abs(merge).max()
+            # merge *= 255.
 
             # Idwt_R = pywt.idwt2((lr_A[:,:,0],(output[:,:,0],output[:,:,1],output[:,:,2])), wavelet='haar')*255
             # Idwt_G = pywt.idwt2((lr_A[:,:,1],(output[:,:,3],output[:,:,4],output[:,:,5])), wavelet='haar')*255
             # Idwt_B = pywt.idwt2((lr_A[:,:,2],(output[:,:,6],output[:,:,7],output[:,:,8])), wavelet='haar')*255
 
-            result = np.clip(sr,0,255).astype(np.uint8) 
-
+            # result = np.clip(sr,0,255).astype(np.uint8) 
+            result = sr
             print('__SUCESS__')
 
             # output = output *255.

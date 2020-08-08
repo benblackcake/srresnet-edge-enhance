@@ -188,8 +188,9 @@ def main():
                     batch_dwt_hr_A = np.stack([batch_dwt_hr[:,:,:,0], batch_dwt_hr[:,:,:,4], batch_dwt_hr[:,:,:,8]], axis=-1)
                     batch_dwt_lr_A = np.stack([batch_dwt_lr[:,:,:,0], batch_dwt_lr[:,:,:,4], batch_dwt_lr[:,:,:,8]], axis=-1)
 
-                    batch_dwt_hr_A /= 255.
-                    batch_dwt_lr_A /= 255.
+                    # batch_dwt_hr_A /= 255.
+                    # batch_dwt_lr_A /= 255.
+                    batch_dwt_lr_A, batch_dwt_hr_A = preprocess(batch_dwt_lr_A, batch_dwt_hr_A)
                     # batch_dwt_A[:,:,:,0] /= np.abs(batch_dwt_A[:,:,:,0]).max()
                     # batch_dwt_A[:,:,:,1] /= np.abs(batch_dwt_A[:,:,:,1]).max()
                     # batch_dwt_A[:,:,:,2] /= np.abs(batch_dwt_A[:,:,:,2]).max()
