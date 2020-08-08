@@ -25,6 +25,9 @@ class Srresnet:
         neg = alphas * (_x - abs(_x)) * 0.5
 
         return pos + neg
+    def _Sine(self,x):
+        w0 = 1.5
+        return tf.sin(w0 * x)
 
     def ResidualBlock(self, x, kernel_size, filter_size):
         """Residual block a la ResNet"""
@@ -122,7 +125,7 @@ class Srresnet:
 
             for j in range(1, C+1):
                 tmp = tf.nn.conv2d(x_edge, self._weightsR['w_R_%d_%d' %(i, j)], strides=[1,1,1,1], padding='SAME') + self._biasesR['b_R_%d_%d' % (i, j)]
-                tmp = tf.nn.relu(tmp)
+                tmp = self._Sine(tmp)
                 x_edge = tf.concat([x_edge, tmp], axis=3)
 
             x_edge = tf.nn.conv2d(x_edge, self._weightsR['w_R_%d_%d' % (i, C+1)], strides=[1,1,1,1], padding='SAME') +  self._biasesR['b_R_%d_%d' % (i, C+1)]
@@ -164,7 +167,7 @@ class Srresnet:
             x_edge, x_LL = self.forward_branch_bine(x_edge, x_LL)
 
             x_edge = tf.nn.conv2d(x_edge, weights['w_RDB_1'], strides=[1,1,1,1], padding='SAME') + biases['b2']
-            x_edge =  tf.contrib.keras.layers.PReLU(shared_axes=[1, 2])(x_edge)
+            x_edge =  self._Sine(x_edge)
             x_edge = tf.add(x_edge_skip, x_edge)
 
             x_LL = tf.nn.conv2d(x_LL, weights['w_resnet_1'], strides=[1,1,1,1], padding='SAME', name='layer_1')
