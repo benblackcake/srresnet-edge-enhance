@@ -42,10 +42,10 @@ class Srresnet:
         x = tf.nn.conv2d(x, weights['w1'], strides=[1,1,1,1], padding='SAME')
         x = tf.layers.batch_normalization(x, training=self.training)
         # x = tf.nn.relu(x)
-        x = tf.contrib.keras.layers.PReLU(shared_axes=[1, 2])(x)
+        x = self._Sine(x)
         x = tf.nn.conv2d(x, weights['w2'], strides=[1,1,1,1], padding='SAME')
         # x = tf.nn.relu(x)
-        x = tf.contrib.keras.layers.PReLU(shared_axes=[1, 2])(x)
+        x = self._Sine(x)
         x = tf.layers.batch_normalization(x, training=self.training)
 
         x = x + skip
@@ -63,7 +63,7 @@ class Srresnet:
         print('after',x)
 
         # x = tf.nn.relu(x)
-        x = tf.contrib.keras.layers.PReLU(shared_axes=[1, 2])(x)
+        x = self._Sine(x)
         return x
 
 
@@ -161,7 +161,7 @@ class Srresnet:
             x_edge_skip = x_edge
 
             x_LL = tf.nn.conv2d(x_LL, weights['w_resnet_in'], strides=[1,1,1,1], padding='SAME')
-            x_LL = tf.contrib.keras.layers.PReLU(shared_axes=[1, 2])(x_LL)
+            x_LL = self._Sine(x_LL)
             x_LL_skip = x_LL
 
             x_edge, x_LL = self.forward_branch_bine(x_edge, x_LL)
