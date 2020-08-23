@@ -5,7 +5,7 @@ from utils import tf_idwt, tf_dwt, tf_batch_ISwt
 class Srresnet:
     """Srresnet Model"""
 
-    def __init__(self, discriminator, training, content_loss='mse', learning_rate=1e-4, num_blocks=16, num_upsamples=2, use_gan=True):
+    def __init__(self, discriminator, training, content_loss='mse', learning_rate=1e-4, num_blocks=16, num_upsamples=2, use_gan=False):
         self.learning_rate = learning_rate
         self.num_blocks = num_blocks
         self.num_upsamples = num_upsamples
