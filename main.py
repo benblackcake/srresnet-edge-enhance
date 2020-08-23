@@ -45,23 +45,39 @@ def main():
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     srresnet_training = tf.placeholder(tf.bool, name='srresnet_training')
+    srgan_training = tf.placeholder(tf.bool, name='srgan_training')
 
-    srresnet_model = srresnet.Srresnet(training=srresnet_training,\
-                              learning_rate=args.learning_rate,\
-                              content_loss=args.content_loss,\
-                              num_upsamples=args.upSample)
+
+
+    discriminator = srresnet.SRGanDiscriminator(training=srgan_training, image_size=args.image_size)
+    srresnet_model = srresnet.Srresnet(
+                            discriminator=discriminator,\
+                            training=srresnet_training,\
+                            learning_rate=args.learning_rate,\
+                            content_loss=args.content_loss,\
+                            num_upsamples=args.upSample,\
+                            use_gan=args.use_gan
+                            )
 
     lr_A = tf.placeholder(tf.float32, [None, None, None, 3], name='LR_DWT_A')
     lr_dwt_edge = tf.placeholder(tf.float32, [None, None, None, 9], name='LR_DWT_edge')
     hr_A = tf.placeholder(tf.float32, [None, None, None, 3], name='HR_image')
+    hr = tf.placeholder(tf.float64, [None, None, None, 3], name='HR')
     hr_dwt_edge = tf.placeholder(tf.float32, [None, None, None, 9], name='HR_DWT_edge')
 
-    sr_out_pred, sr_BCD_pred, sr_pred = srresnet_model.forward(lr_A, lr_dwt_edge)
+    sr_out_pred, sr_BCD_pred, sr_pred, sr_pred_concat = srresnet_model.forward(lr_A, lr_dwt_edge)
     # sr_out_pred = srresnet_model.forward_LL_branch(lr_A)
     # sr_BCD_pred = srresnet_model.forward_edge_branch(lr_dwt_edge)
 
-    sr_loss = srresnet_model.loss_function(hr_A, sr_out_pred, hr_dwt_edge, sr_BCD_pred)
+    sr_loss = srresnet_model.loss_function(hr_A, sr_out_pred, hr_dwt_edge, sr_BCD_pred, hr, sr_pred, sr_pred_concat)
     sr_opt = srresnet_model.optimize(sr_loss)
+
+
+    d_x_real = tf.placeholder(tf.float32, [None, None, None, 12], name='input_real')
+    d_y_real_pred, d_y_real_pred_logits = discriminator.forward(d_x_real)
+    d_y_fake_pred, d_y_fake_pred_logits = discriminator.forward(sr_pred_concat)
+    d_loss = discriminator.loss_function(d_y_real_pred, d_y_fake_pred, d_y_real_pred_logits, d_y_fake_pred_logits)
+    d_train_step = discriminator.optimize(d_loss)
 
     benchmarks = [
         Benchmark('Benchmarks/Set5', name='Set5'),
@@ -90,7 +106,7 @@ def main():
         iteration = 0
         epoch = 0
 
-        saver = tf.train.Saver(max_to_keep=100)
+        saver = tf.train.Saver(max_to_keep=200)
 
         # Load all
         if args.load:
@@ -160,7 +176,7 @@ def main():
                         # Evaluate benchmarks
                         log_line = ''
                         for benchmark in benchmarks:
-                            psnr, ssim, _, _ = benchmark.evaluate(sess, sr_out_pred, sr_BCD_pred, sr_pred, log_path, iteration)
+                            psnr, ssim, _, _ = benchmark.evaluate(sess, sr_out_pred, sr_BCD_pred, sr_pred, sr_pred_concat, log_path, iteration)
                         # #     # benchmark.evaluate(sess, sr_pred, log_path, iteration)
                             print(' [%s] PSNR: %.2f, SSIM: %.4f' % (benchmark.name, psnr, ssim), end='')
                             log_line += ',%.7f, %.7f' % (psnr, ssim)
@@ -171,56 +187,67 @@ def main():
                         # # Save checkpoint
                         saver.save(sess, os.path.join(log_path, 'weights'), global_step=iteration, write_meta_graph=False)
                     
+
                     # Train SRResnet   
                     batch_hr = train_data_set[batch_idx:batch_idx + 16]
 
-
-                    # ycbcr_batch = batch_bgr2ycbcr(batch_hr)
                     batch_hr = batch_bgr2rgb(batch_hr)
                     batch_lr = downsample_batch(batch_hr, factor=4)
 
                     batch_dwt_hr = batch_Swt(batch_hr)
                     batch_dwt_lr = batch_Swt(batch_lr)
 
-                    # batch_dwt_lr[:,:,:,0] /= np.abs(batch_dwt_lr[:,:,:,0]).max()*255.
-                    # batch_dwt_lr[:,:,:,4] /= np.abs(batch_dwt_lr[:,:,:,4]).max()*255.
-                    # batch_dwt_lr[:,:,:,8] /= np.abs(batch_dwt_lr[:,:,:,8]).max()*255.
                     batch_dwt_hr_A = np.stack([batch_dwt_hr[:,:,:,0], batch_dwt_hr[:,:,:,4], batch_dwt_hr[:,:,:,8]], axis=-1)
                     batch_dwt_lr_A = np.stack([batch_dwt_lr[:,:,:,0], batch_dwt_lr[:,:,:,4], batch_dwt_lr[:,:,:,8]], axis=-1)
 
                     batch_dwt_hr_A /= 255.
                     batch_dwt_lr_A /= 255.
-                    # batch_dwt_A[:,:,:,0] /= np.abs(batch_dwt_A[:,:,:,0]).max()
-                    # batch_dwt_A[:,:,:,1] /= np.abs(batch_dwt_A[:,:,:,1]).max()
-                    # batch_dwt_A[:,:,:,2] /= np.abs(batch_dwt_A[:,:,:,2]).max()
-
-                    # batch_dwt_A[:,:,:,0] *= 255.
-                    # batch_dwt_A[:,:,:,1] *= 255.
-                    # batch_dwt_A[:,:,:,2] *= 255.
-
-                    # batch_dwt_lr_A = batch_dwt(batch_dwt_A)
 
                     batch_hr_BCD = np.concatenate([batch_dwt_hr[:,:,:,1:4], batch_dwt_hr[:,:,:,5:8], batch_dwt_hr[:,:,:,9:12]], axis=-1)
                     batch_lr_BCD = np.concatenate([batch_dwt_lr[:,:,:,1:4], batch_dwt_lr[:,:,:,5:8], batch_dwt_lr[:,:,:,9:12]], axis=-1)
-                    # batch_lr_BCD = np.concatenate([up_sample_batch(batch_dwt_lr_A[:,:,:,1:4], factor=2),\
-                    #                                up_sample_batch(batch_dwt_lr_A[:,:,:,5:8], factor=2),\
-                    #                                up_sample_batch(batch_dwt_lr_A[:,:,:,9:12], factor=2)], axis=-1)
-                    # batch_lr = downsample_batch(batch_hr, factor=4)
-                    # batch_lr_BCD = up_sample_batch(batch_lr_BCD, factor=2)
+
 
                     batch_hr_BCD = batch_hr_BCD/255.
                     batch_lr_BCD = batch_lr_BCD/255.
 
-                    _, err = sess.run([sr_opt,sr_loss],\
-                         feed_dict={srresnet_training: False,\
+                    batch_hr =batch_hr / 255.
+
+                    batch_hr_R = np.expand_dims(batch_hr[:,:,:,0],axis=-1)
+                    batch_hr_G = np.expand_dims(batch_hr[:,:,:,1], axis=-1)
+                    batch_hr_B = np.expand_dims(batch_hr[:,:,:,2],axis=-1)
+
+                    concat_R = np.concatenate([batch_hr_R, batch_hr_BCD[:,:,:,0:3]],axis=-1)
+                    concat_G = np.concatenate([batch_hr_G, batch_hr_BCD[:,:,:,3:6]],axis=-1)
+                    concat_B = np.concatenate([batch_hr_B, batch_hr_BCD[:,:,:,6:9]],axis=-1)
+
+                    concat_real = np.concatenate([concat_R, concat_G, concat_B], axis=-1)
+
+                    if args.use_gan == True:
+                        print('Using GAN')
+                        _, err = sess.run([d_train_step,d_loss],\
+                            feed_dict={srgan_training: False,\
+                                    srresnet_training: False,\
                                     lr_A: batch_dwt_lr_A,\
                                     lr_dwt_edge: batch_lr_BCD,\
                                     hr_A: batch_dwt_hr_A,\
                                     hr_dwt_edge: batch_hr_BCD,\
+                                    hr: batch_hr,\
+                                    d_x_real:concat_real,\
 
                                     })
 
-                    #print('__training__ %s' % iteration)
+                    _, err = sess.run([sr_opt,sr_loss],\
+                        feed_dict={srresnet_training: False,\
+                                    srgan_training: False,\
+                                    lr_A: batch_dwt_lr_A,\
+                                    lr_dwt_edge: batch_lr_BCD,\
+                                    hr_A: batch_dwt_hr_A,\
+                                    hr_dwt_edge: batch_hr_BCD,\
+                                    hr: batch_hr,\
+
+
+                                    })
+
                     iteration += 1
                 print('__epoch__: %s' % epoch)
                 epoch += 1

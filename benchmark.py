@@ -133,7 +133,7 @@ class Benchmark:
             if count >= 14:
                 break
 
-    def evaluate(self, sess, sr_out_pred, sr_BCD_pred, sr_pred, log_path=None, iteration=0):
+    def evaluate(self, sess, sr_out_pred, sr_BCD_pred, sr_pred, sr_pred_concat, log_path=None, iteration=0):
         """Evaluate benchmark, returning the score and saving images."""
 
         pred = []
@@ -148,7 +148,7 @@ class Benchmark:
             lr_A /= 255.
             lr_dwt_A_BCD /= 255.
 
-            sr_A, sr_BCD, sr = sess.run([sr_out_pred, sr_BCD_pred, sr_pred], feed_dict={'srresnet_training:0': False,\
+            sr_A, sr_BCD, sr, _ = sess.run([sr_out_pred, sr_BCD_pred, sr_pred, sr_pred_concat], feed_dict={'srresnet_training:0': False,\
                                                 'LR_DWT_A:0': lr_A,\
                                                 'LR_DWT_edge:0': lr_dwt_A_BCD,\
                                                 # 'LR_edge:0': lr_edge[np.newaxis]
