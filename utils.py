@@ -181,13 +181,11 @@ def evaluate_model(loss_function, get_batch, sess, num_images, batch_size):
 
         loss += sess.run(loss_function,
                          feed_dict={'srresnet_training:0': False,\
-                                    'srgan_training:0': False,\
                                     'LR_DWT_A:0': batch_dwt_lr_A,\
                                     'LR_DWT_edge:0': batch_lr_BCD,\
                                     'HR_image:0': batch_dwt_hr_A,\
                                     'HR_DWT_edge:0': batch_hr_BCD,\
                                     'HR:0': batch_hr,\
-                                    # 'input_real:0':batch_dwt_hr,\
                                     })
         total += 1
     loss = loss / total
