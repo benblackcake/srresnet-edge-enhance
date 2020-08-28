@@ -5,7 +5,7 @@ from utils import tf_idwt, tf_dwt, tf_batch_ISwt
 class Srresnet:
     """Srresnet Model"""
 
-    def __init__(self, training, content_loss='mse', learning_rate=1e-4, num_blocks=32, num_upsamples=2):
+    def __init__(self, training, content_loss='mse', learning_rate=1e-4, num_blocks=16, num_upsamples=2):
         self.learning_rate = learning_rate
         self.num_blocks = num_blocks
         self.num_upsamples = num_upsamples
@@ -227,7 +227,7 @@ class Srresnet:
             lamd = 0.05
             # y_sobeled = tf.image.sobel_edges(y)
             # y_pred_sobeled = tf.image.sobel_edges(y_pred)
-            return tf.cast(tf.reduce_mean(tf.square(hr - sr_pred)), tf.float32) + 5e-1* (tf.reduce_mean(tf.square(y_A - y_A_pred))) + (2e-1*tf.reduce_mean(tf.abs(y_BCD - y_BCD_pred)))
+            return tf.cast(tf.reduce_mean(tf.abs(hr - sr_pred)), tf.float32) + (3.0*tf.reduce_mean(tf.abs(y_BCD - y_BCD_pred)))
         # if self.content_loss == 'edge_loss_L1':
         #     lamd = 2.0
         #     # y_sobeled = tf.image.sobel_edges(y)
