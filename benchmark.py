@@ -112,15 +112,19 @@ class Benchmark:
             os.makedirs(os.path.split(path)[0])
         misc.toimage(image, cmin=0, cmax=255).save(path)
 
-    def save_images(self, images, edge_image, log_path, iteration):
+    def save_images(self, images, edge_LH, edge_HL, edge_HH, log_path, iteration):
         count = 0
-        for output, output_edge, lr, hr, name in zip(images, edge_image, self.images_lr, self.images_hr, self.names):
+        for output, LH, HL, HH, lr, hr, name in zip(images, edge_LH, edge_HL, edge_HH, self.images_lr, self.images_hr, self.names):
             # Save output
             path = os.path.join(log_path, self.name, name, '%d_out.png' % iteration)
             self.save_image(output, path)
             # Save output edge map
-            path = os.path.join(log_path, self.name, name, '%d_out_edge.png' % iteration)
-            self.save_image(output_edge, path)
+            path = os.path.join(log_path, self.name, name, '%d_out_LH.png' % iteration)
+            self.save_image(LH, path)
+            path = os.path.join(log_path, self.name, name, '%d_out_HL.png' % iteration)
+            self.save_image(HL, path)
+            path = os.path.join(log_path, self.name, name, '%d_out_HH.png' % iteration)
+            self.save_image(HH, path)
             # Save ground truth
             path = os.path.join(log_path, self.name, name, '%d_hr.png' % iteration)
             self.save_image(hr, path)
@@ -137,7 +141,10 @@ class Benchmark:
         """Evaluate benchmark, returning the score and saving images."""
 
         pred = []
-        edge = []
+        edge_LH = []
+        edge_HL = []
+        edge_HH = []
+
         for i, lr in enumerate(self.images_lr):
             # feed images 1 by 1 because they have different sizes
             lr_dwt = batch_Swt(lr[np.newaxis])
@@ -234,8 +241,12 @@ class Benchmark:
             # cv2.imshow('__DEBUG__', np.clip(np.abs(np.squeeze(output_BCD[:,:,:,0])),0,255).astype(np.uint8))
             # cv2.waitKey(0)
             LH = np.abs(sr_BCD[:,:,0])
+            HL = np.abs(sr_BCD[:,:,1])
+            HH = np.abs(sr_BCD[:,:,2])
 
             LH *=255.
+            HL *=255.
+            HH *=255.
             # cv2.imshow('__DEBUG__', LH.astype('uint8'))
             # cv2.waitKey(0)
 
@@ -261,10 +272,12 @@ class Benchmark:
             '''
             # deprocess output
             pred.append(result.astype('uint8'))
-            edge.append(LH.astype('uint8'))
+            edge_LH.append(LH.astype('uint8'))
+            edge_HL.append(HL.astype('uint8'))
+            edge_HH.append(HH.astype('uint8'))
         # save images
         if log_path:
-            self.save_images(pred, edge, log_path, iteration)
+            self.save_images(pred, edge_LH, edge_HL, edge_HH, log_path, iteration)
         return self.test_images(self.images_hr, pred)
     
     
