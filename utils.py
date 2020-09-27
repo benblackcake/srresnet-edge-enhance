@@ -213,7 +213,7 @@ def batch_bgr2rgb(batch):
 
     return batch
 
-def modcrop(img, scale =4):
+def modcrop(img, scale =2):
     """
     To scale down and up the original image, first thing to do is to have no remainder while scaling operation.
     """

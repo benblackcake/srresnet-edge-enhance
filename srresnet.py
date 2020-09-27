@@ -228,9 +228,9 @@ class Srresnet:
 
         if self.content_loss == 'edge_loss_L1':
 
-            lamd_LL = 1e-3
+            lamd_LL = 1e-4
             lamd_edge = 1
-            alpha = 1.0
+            alpha = 3.0
             # y_sobeled = tf.image.sobel_edges(y)
             # y_pred_sobeled = tf.image.sobel_edges(y_pred)
             l_pred = tf.cast(hr - sr_pred, tf.float32)

@@ -67,7 +67,8 @@ def main():
     benchmarks = [
         Benchmark('Benchmarks/Set5', name='Set5'),
         Benchmark('Benchmarks/Set14', name='Set14'),
-        Benchmark('Benchmarks/BSD100', name='BSD100')
+        Benchmark('Benchmarks/BSD100', name='BSD100'),
+        Benchmark('Benchmarks/COCO', name='COCO')
     ]
 
     if args.validate_benchmarks:
@@ -112,22 +113,20 @@ def main():
         if args.is_val:
             benchmarks = [
                 Benchmark('Benchmarks/Set5', name='Set5'),
-                Benchmark('Benchmarks/Set14', name='Set14'),
-                Benchmark('Benchmarks/BSD100', name='BSD100'),
-                Benchmark('Benchmarks/UCMerced_LandUse', name='UCMerced_LandUse'),
-                Benchmark('Benchmarks/RSSCN7', name='RSSCN7')
             ]
 
             log_line = ''
             for benchmark in benchmarks:
-                psnr, ssim, _, _ = benchmark.evaluate(sess, sr_pred, log_path, iteration)
+                # psnr, ssim, _, _ = benchmark.evaluate(sess, sr_pred, log_path, iteration)
+                psnr, ssim, _, _ = benchmark.evaluate(sess, sr_out_pred, sr_BCD_pred, sr_pred, log_path, iteration)
+
                 print(' [%s] PSNR: %.2f, SSIM: %.4f' % (benchmark.name, psnr, ssim), end='')
                 log_line += ',%.7f, %.7f' % (psnr, ssim)
             print()
             # Write to log
             with open(log_path + '/PSNR.csv', 'a') as f:
                 f.write(
-                    'iteration, set5_psnr, set5_ssim, set14_psnr, set14_ssim, bsd100_psnr, bsd100_ssim,UCMerced_LandUse_psnr, UCMerced_LandUse_ssim,RSSCN7_psnr, RSSCN7_ssim\n'
+                    'iteration, _psnr, _ssim\n'
                  )
                 f.write('%d,%s\n' % (iteration, log_line))
             # Save checkpoint
