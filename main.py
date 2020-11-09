@@ -67,8 +67,7 @@ def main():
     benchmarks = [
         Benchmark('Benchmarks/Set5', name='Set5'),
         Benchmark('Benchmarks/Set14', name='Set14'),
-        Benchmark('Benchmarks/BSD100', name='BSD100'),
-        Benchmark('Benchmarks/COCO', name='COCO')
+        Benchmark('Benchmarks/BSD100', name='BSD100')
     ]
 
     if args.validate_benchmarks:
@@ -112,21 +111,45 @@ def main():
         
         if args.is_val:
             benchmarks = [
-                Benchmark('Benchmarks/Set5', name='Set5'),
+                # Benchmark('Benchmarks/Set5', name='Set5'),
+                # Benchmark('Benchmarks/Set14', name='Set14'),
+                # Benchmark('Benchmarks/BSD100', name='BSD100'),
+                # Benchmark('Benchmarks/UCMerced_LandUse/agricultural', name='UCMerced_agricultural'),
+                # Benchmark('Benchmarks/UCMerced_LandUse/airplane', name='UCMerced_airplane'),
+                # Benchmark('Benchmarks/UCMerced_LandUse/baseballdiamond', name='UCMerced_baseballdiamond'),
+                # Benchmark('Benchmarks/UCMerced_LandUse/beach', name='UCMerced_beach'),
+                # Benchmark('Benchmarks/UCMerced_LandUse/buildings', name='UCMerced_buildings'),
+                # Benchmark('Benchmarks/UCMerced_LandUse/chaparral', name='UCMerced_chaparral'),
+                # Benchmark('Benchmarks/UCMerced_LandUse/denseresidential', name='UCMerced_denseresidential'),
+                # Benchmark('Benchmarks/UCMerced_LandUse/forest', name='UCMerced_forest'),
+                # Benchmark('Benchmarks/UCMerced_LandUse/freeway', name='UCMerced_freeway'),
+                # Benchmark('Benchmarks/UCMerced_LandUse/golfcourse', name='UCMerced_golfcourse'),
+                # Benchmark('Benchmarks/UCMerced_LandUse/harbor', name='UCMerced_harbor'),
+                # Benchmark('Benchmarks/UCMerced_LandUse/intersection', name='UCMerced_intersection'),
+                # Benchmark('Benchmarks/UCMerced_LandUse/mediumresidential', name='UCMerced_mediumresidential'),
+                # Benchmark('Benchmarks/UCMerced_LandUse/mobilehomepark', name='UCMerced_mobilehomepark'),
+                # Benchmark('Benchmarks/UCMerced_LandUse/overpass', name='UCMerced_overpass'),
+                # Benchmark('Benchmarks/UCMerced_LandUse/parkinglot', name='UCMerced_parkinglot'),
+                # Benchmark('Benchmarks/UCMerced_LandUse/river', name='UCMerced_river'),
+                # Benchmark('Benchmarks/UCMerced_LandUse/runway', name='UCMerced_runway'),
+                # Benchmark('Benchmarks/UCMerced_LandUse/sparseresidential', name='UCMerced_sparseresidential'),
+                # Benchmark('Benchmarks/UCMerced_LandUse/storagetanks', name='UCMerced_storagetanks'),
+                # Benchmark('Benchmarks/UCMerced_LandUse/tenniscourt', name='UCMerced_tenniscourt'),
+                Benchmark('Benchmarks/UCMerced_LandUse_S', name='UCMerced_ALL'),
+                # Benchmark('Benchmarks/RSSCN7', name='RSSCN7')
             ]
 
             log_line = ''
             for benchmark in benchmarks:
-                # psnr, ssim, _, _ = benchmark.evaluate(sess, sr_pred, log_path, iteration)
                 psnr, ssim, _, _ = benchmark.evaluate(sess, sr_out_pred, sr_BCD_pred, sr_pred, log_path, iteration)
-
+                # psnr, ssim, _, _ = benchmark.evaluate(sess, sr_pred, log_path, iteration)
                 print(' [%s] PSNR: %.2f, SSIM: %.4f' % (benchmark.name, psnr, ssim), end='')
                 log_line += ',%.7f, %.7f' % (psnr, ssim)
             print()
             # Write to log
             with open(log_path + '/PSNR.csv', 'a') as f:
                 f.write(
-                    'iteration, _psnr, _ssim\n'
+                    'iteration, UCMerced_LandUse_psnr, UCMerced_LandUse_ssim\n'
                  )
                 f.write('%d,%s\n' % (iteration, log_line))
             # Save checkpoint
