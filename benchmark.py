@@ -145,8 +145,8 @@ class Benchmark:
 
             # Hack so that we only do first 14 images in BSD100 instead of the whole thing
             count += 1
-            if count >= 14:
-                break
+            # if count >= 14:
+            #     break
 
     def evaluate(self, sess, sr_out_pred, sr_BCD_pred, sr_pred, log_path=None, iteration=0):
         """Evaluate benchmark, returning the score and saving images."""
